@@ -1,22 +1,10 @@
-# Next.js + Contentlayer
+# Next.js App (with Prisma & Tailwind)
 
-A template with Next.js 13 app dir, Contentlayer, Tailwind CSS and dark mode.
-
-https://next-contentlayer.vercel.app
-
----
-
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+This project uses Next.js 15, React 19, Tailwind CSS 4, ESLint 9, and Prisma.
 
 ## Getting Started
 
-First, run the development server:
-
+Install deps:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm i
+# or pnpm i / bun i
