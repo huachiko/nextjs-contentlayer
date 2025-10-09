@@ -1,0 +1,137 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Theme {
+  LIGHT
+  DARK
+}
+
+model User {
+  id           Int            @id @default(autoincrement())
+  username     String         @unique   // login handle
+  displayName  String?                  // 👈 optional, friendly display name
+  email        String         @unique
+  password     String
+  profilePhoto String?
+  createdAt    DateTime       @default(now())
+
+  decks        Deck[]
+  sessions     PracticeSession[]
+  settings     UserSetting?
+  finalPapers  FinalYearPaper[]
+}
+
+
+model Topic {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+
+  decks       Deck[]
+  finalPapers FinalYearPaper[]
+}
+
+model Deck {
+  id          Int      @id @default(autoincrement())
+  topicId     Int
+  title       String
+  createdById Int
+  createdAt   DateTime @default(now())
+
+  topic       Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  cards       Card[]
+  sessions    PracticeSession[]
+}
+
+model Card {
+  id        Int      @id @default(autoincrement())
+  deckId    Int
+  question  String
+  answer    String
+  hint      String?
+  createdAt DateTime @default(now())
+
+  deck      Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  attempts  PracticeAttempt[]
+  generated GeneratedQuestion[]
+  solutions Solution[]            // ✅ new: solutions linked to a card
+}
+
+model PracticeSession {
+  id          Int               @id @default(autoincrement())
+  userId      Int
+  deckId      Int
+  startedAt   DateTime          @default(now())
+  completedAt DateTime?
+
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deck        Deck              @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  attempts    PracticeAttempt[]
+}
+
+model PracticeAttempt {
+  id          Int             @id @default(autoincrement())
+  sessionId   Int
+  cardId      Int
+  revealed    Boolean         @default(false)
+  correct     Boolean?
+  attemptedAt DateTime        @default(now())
+
+  session     PracticeSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  card        Card            @relation(fields: [cardId], references: [id], onDelete: Cascade)
+}
+
+model UserSetting {
+  id             Int      @id @default(autoincrement())
+  userId         Int      @unique
+  theme          Theme    @default(LIGHT)
+  autoshowAnswer Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model GeneratedQuestion {
+  id        Int      @id @default(autoincrement())
+  cardId    Int
+  content   String
+  source    String?
+  createdAt DateTime @default(now())
+
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+}
+
+model FinalYearPaper {
+  id          Int      @id @default(autoincrement())
+  topicId     Int
+  uploadedBy  Int
+  title       String
+  fileUrl     String
+  year        Int
+  createdAt   DateTime @default(now())
+
+  topic       Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  uploader    User     @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  solutions   Solution[]          // ✅ new: solutions linked to a final year paper
+}
+
+model Solution {
+  id          Int      @id @default(autoincrement())
+  cardId      Int?     // link to a Card (if solution is for a practice Q)
+  paperId     Int?     // link to a FinalYearPaper (if solution is for a paper Q)
+  content     String?  // written explanation / worked steps
+  fileUrl     String?  // optional file link (PDF, image, etc.)
+  createdAt   DateTime @default(now())
+
+  card        Card?           @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  paper       FinalYearPaper? @relation(fields: [paperId], references: [id], onDelete: Cascade)
+}
