@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
+import Link from 'next/link';
 
 const HomePage = () => {
   const router = useRouter()
@@ -35,18 +36,24 @@ const HomePage = () => {
               <div className="menu-icon">{sidebarExpanded ? '✕' : '☰'}</div>
             </button>
             <nav className="nav-items">
+        
               <div className="nav-item active">
                 <img src="/icons/HomeIcon2.png" alt="Home" />
                 {sidebarExpanded && <span className="nav-text">Home</span>}
               </div>
+      
+              <Link href="/profile">
               <div className="nav-item">
                 <img src="/icons/ProfileIcon2.png" alt="Profile" />
                 {sidebarExpanded && <span className="nav-text">Profile</span>}
               </div>
+              </Link>
+              <Link href="/topicspage">
               <div className="nav-item">
                 <img src="/icons/ContentIcon1.png" alt="Content" />
                 {sidebarExpanded && <span className="nav-text">Content</span>}
               </div>
+              </Link>
               <div className="nav-item">
                 <img src="/icons/ActivityIcon2.png" alt="Activity" />
                 {sidebarExpanded && <span className="nav-text">Activity Stats</span>}

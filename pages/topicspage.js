@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
+import Link from 'next/link';
 
 const Topicspage = () => {
   const router = useRouter()
@@ -41,12 +42,18 @@ const Topicspage = () => {
               </button>
             </div>
             <div className="topicspage-segments">
+              
               <div className="topicspage-navitem01">
+                 <Link href="/">
                 <div className="topicspage-statelayer2">
+                 
                   <img src="/icons/HomeIcon2.png" alt="Home" className="topicspage-homeicon2" />
                   {sidebarExpanded && <span className="topicspage-text23 M3labellarge">Home</span>}
+                  
                 </div>
+                </Link>
               </div>
+              
               <div className="topicspage-navitem02">
                 <div className="topicspage-statelayer3">
                   <img src="/icons/ProfileIcon2.png" alt="Profile" className="topicspage-profileicon2" />
