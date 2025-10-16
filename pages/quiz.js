@@ -1,4 +1,9 @@
-import React, { useState } from 'react'
+
+// ==========================================
+// FILE: pages/quiz.js (COMPLETE UPDATED VERSION)
+// ==========================================
+
+import React, { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 
@@ -12,13 +17,123 @@ const QuizPage = () => {
   const [selectedAnswer, setSelectedAnswer] = useState(null)
   const [sidebarExpanded, setSidebarExpanded] = useState(true)
   const [questionStatuses, setQuestionStatuses] = useState({})
-  
-  // Track the highest question number reached
   const [maxQuestion, setMaxQuestion] = useState(10)
+  
+  const [sessionId, setSessionId] = useState(null)
+  const [questions, setQuestions] = useState({})
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  // Initialize session ID when component mounts
+  useEffect(() => {
+    const newSessionId = Date.now().toString()
+    setSessionId(newSessionId)
+    
+    // Try to load questions from sessionStorage for this topic
+    if (topic) {
+      const savedData = sessionStorage.getItem(`quiz_${topic}`)
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData)
+          setQuestions(parsed.questions || {})
+          setQuestionStatuses(parsed.statuses || {})
+          setMaxQuestion(parsed.maxQuestion || 10)
+        } catch (e) {
+          console.error('Failed to load saved session:', e)
+        }
+      }
+    }
+  }, [topic])
+
+  // Save questions to sessionStorage whenever they change
+  useEffect(() => {
+    if (topic && Object.keys(questions).length > 0) {
+      const dataToSave = {
+        questions,
+        statuses: questionStatuses,
+        maxQuestion
+      }
+      sessionStorage.setItem(`quiz_${topic}`, JSON.stringify(dataToSave))
+    }
+  }, [questions, questionStatuses, maxQuestion, topic])
 
   const toggleSidebar = () => {
     setSidebarExpanded(!sidebarExpanded)
   }
+
+  const generateQuestion = async (questionNumber) => {
+    // Check if question already exists
+    if (questions[questionNumber]) {
+      console.log(`Question ${questionNumber} already exists, skipping generation`)
+      return
+    }
+
+    // Check if already generating this question
+    if (loading && currentQuestion === questionNumber) {
+      console.log(`Question ${questionNumber} is already being generated`)
+      return
+    }
+
+    console.log(`Generating question ${questionNumber}...`)
+    setLoading(true)
+    setError(null)
+
+    try {
+      // Get all previously generated questions to avoid repetition
+      const previousQuestionTexts = Object.values(questions)
+        .map(q => q.question)
+        .filter(Boolean);
+      
+      const response = await fetch('/api/generate-question', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          topic: title || topic || 'Additional Mathematics',
+          previousQuestions: previousQuestionTexts // Send previous questions to API
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate question');
+      }
+
+      const data = await response.json();
+      
+      setQuestions(prev => {
+        const updated = {
+          ...prev,
+          [questionNumber]: data.question
+        }
+        console.log(`Question ${questionNumber} generated and saved`, updated)
+        return updated
+      });
+    } catch (err) {
+      setError(err.message);
+      console.error('Error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load current question if it doesn't exist
+  useEffect(() => {
+    if (topic && !questions[currentQuestion]) {
+      console.log(`Current question ${currentQuestion} doesn't exist, generating...`)
+      generateQuestion(currentQuestion);
+    }
+  }, [currentQuestion, topic]);
+
+  // Pre-generate next question (Option 3)
+  useEffect(() => {
+    if (questions[currentQuestion] && !questions[currentQuestion + 1]) {
+      console.log(`Pre-generating next question ${currentQuestion + 1}...`)
+      setTimeout(() => {
+        generateQuestion(currentQuestion + 1)
+      }, 500)
+    }
+  }, [questions, currentQuestion])
 
   const handleShowSolution = () => {
     setShowSolution(!showSolution)
@@ -48,22 +163,26 @@ const QuizPage = () => {
   }
 
   const handleEndSession = () => {
-    if (confirm('Are you sure you want to end this session?')) {
-      router.push('/')
+    if (confirm('Are you sure you want to end this session? All questions will be cleared.')) {
+      // Clear saved session data
+      sessionStorage.removeItem(`quiz_${topic}`)
+      // Reset state
+      setQuestions({})
+      setQuestionStatuses({})
+      setMaxQuestion(10)
+      setCurrentQuestion(1)
+      router.push('/topicspage')
     }
   }
 
   const handleNext = () => {
-    // No limit - always allow next
     const nextQuestion = currentQuestion + 1
     setCurrentQuestion(nextQuestion)
     
-    // Expand the question list if needed
     if (nextQuestion > maxQuestion) {
       setMaxQuestion(nextQuestion)
     }
     
-    // Initialize status for new question if it doesn't exist
     if (!questionStatuses[nextQuestion]) {
       setQuestionStatuses(prev => ({
         ...prev,
@@ -92,8 +211,8 @@ const QuizPage = () => {
     setSelectedAnswer(null)
   }
 
-  // Generate array of question numbers from 1 to maxQuestion
   const questionNumbers = Array.from({ length: maxQuestion }, (_, i) => i + 1)
+  const currentQuestionData = questions[currentQuestion]
 
   return (
     <>
@@ -109,7 +228,7 @@ const QuizPage = () => {
               <div className="menu-icon">{sidebarExpanded ? '✕' : '☰'}</div>
             </button>
             <nav className="nav-items">
-              <div className="nav-item">
+              <div className="nav-item" onClick={() => router.push('/')}>
                 <img src="/icons/HomeIcon2.png" />
                 {sidebarExpanded && <span className="nav-text">Home</span>}
               </div>
@@ -123,14 +242,13 @@ const QuizPage = () => {
               </div>
               <div className="nav-item">
                 <img src="/icons/ActivityIcon2.png"  />
-                {sidebarExpanded && <span className="nav-text">Activity<p/> Stats</span>}
+                {sidebarExpanded && <span className="nav-text">Activity Stats</span>}
               </div>
             </nav>
           </div>
 
           {/* Main Content */}
           <div className={`main-content ${sidebarExpanded ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
-            {/* Topic Header */}
             <div className="topic-header">
               <h1 className="topic-title">{title || 'Quiz'}</h1>
             </div>
@@ -139,97 +257,122 @@ const QuizPage = () => {
             <div className="question-card">
               <h2 className="question-title">Question {currentQuestion}</h2>
               
-              <div className="question-content">
-                <p className="question-text">
-                  Use the substitution <em>u = 4<sup>x</sup></em> to solve each of the following equations.
-                </p>
-                
-                <div className="equation-list">
-                  <p className="equation">
-                    (a) 2(4<sup>x</sup>) + 4<sup>x+2</sup> = 9(4<sup>-0.5</sup>)
-                  </p>
-                  <p className="equation">
-                    (b) 4<sup>x-a</sup> + 16<sup>x</sup> = 66
-                  </p>
-                </div>
-
-                {/* Solution Display */}
-                {showSolution && (
-                  <div className="solution-box">
-                    <h3>Full Solution:</h3>
-                    <p>Step 1: Let u = 4<sup>x</sup></p>
-                    <p>Step 2: Substitute into the equation...</p>
-                    <p className="solution-detail">(Solution steps would go here)</p>
-                  </div>
-                )}
-
-                {/* Answer Display */}
-                {showAnswer && (
-                  <div className="answer-box">
-                    <h3>Answer:</h3>
-                    <p>(a) x = -1.5</p>
-                    <p>(b) x = 2</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="action-buttons">
-                <button 
-                  className="btn-outline"
-                  onClick={handleShowSolution}
-                >
-                  {showSolution ? 'Hide Solution' : 'Show Full Solution'}
-                </button>
-                <button 
-                  className="btn-primary"
-                  onClick={handleShowAnswer}
-                >
-                  {showAnswer ? 'Hide Answer' : 'Show Answer'}
-                </button>
-              </div>
-              {/* Answer Feedback Section */}
-              {showAnswer && (
-                <div className="feedback-section">
-                  <p className="feedback-question">Did you get the correct answer?</p>
-                  <div className="feedback-buttons">
-                    <button 
-                      className={`feedback-btn correct ${selectedAnswer === 'correct' ? 'selected' : ''}`}
-                      onClick={handleCorrectAnswer}
-                      disabled={questionStatuses[currentQuestion] && questionStatuses[currentQuestion] !== 'unanswered'}
-                    >
-                      <img src="/icons/tick.svg" alt="tick" className="Quiz-tick" />
-                    </button>
-                    <button 
-                      className={`feedback-btn incorrect ${selectedAnswer === 'incorrect' ? 'selected' : ''}`}
-                      onClick={handleIncorrectAnswer}
-                      disabled={questionStatuses[currentQuestion] && questionStatuses[currentQuestion] !== 'unanswered'}
-                    >
-                      <img src="/icons/cross.svg" alt="cross" className="Quiz-cross" />
-                    </button>
-                  </div>
+              {loading && (
+                <div className="loading-state">
+                  <div className="spinner"></div>
+                  <p>Generating question...</p>
                 </div>
               )}
-              {/* Navigation Buttons */}
-              <div className="nav-buttons">
-                <button 
-                  className="btn-back" 
-                  onClick={handlePrevious}
-                  disabled={currentQuestion === 1}
-                  style={{ opacity: currentQuestion === 1 ? 0.3 : 1 }}
-                >
-                  ← 
-                </button>
-                <button className="btn-text" onClick={handleEndSession}>
-                  End session
-                </button>
-                <button 
-                  className="btn-next" 
-                  onClick={handleNext}
-                >
-                  Next →
-                </button>
-              </div>
+
+              {error && (
+                <div className="error-state">
+                  <p>Failed to generate question: {error}</p>
+                  <button 
+                    className="btn-retry"
+                    onClick={() => generateQuestion(currentQuestion)}
+                  >
+                    Try Again
+                  </button>
+                </div>
+              )}
+
+              {!loading && !error && currentQuestionData && (
+                <>
+                  <div className="question-content">
+                    <p className="question-text">
+                      {currentQuestionData.question}
+                    </p>
+                    
+                    {currentQuestionData.parts && currentQuestionData.parts.length > 0 && (
+                      <div className="equation-list">
+                        {currentQuestionData.parts.map((part, idx) => (
+                          <p key={idx} className="equation">
+                            {part.label} {part.text}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+
+                    {showSolution && currentQuestionData.solution && (
+                      <div className="solution-box">
+                        <h3>Full Solution:</h3>
+                        {currentQuestionData.solution.steps.map((step, idx) => (
+                          <div key={idx} className="solution-step">
+                            <p className="step-title">Step {step.step}: {step.description}</p>
+                            <p className="step-work">{step.work}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {showAnswer && currentQuestionData.solution && (
+                      <div className="answer-box">
+                        <h3>Answer:</h3>
+                        {currentQuestionData.solution.answers.map((ans, idx) => (
+                          <p key={idx}>{ans.part} {ans.answer}</p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="action-buttons">
+                    <button 
+                      className="btn-outline"
+                      onClick={handleShowSolution}
+                    >
+                      {showSolution ? 'Hide Solution' : 'Show Full Solution'}
+                    </button>
+                    <button 
+                      className="btn-primary"
+                      onClick={handleShowAnswer}
+                    >
+                      {showAnswer ? 'Hide Answer' : 'Show Answer'}
+                    </button>
+                  </div>
+
+                  {showAnswer && (
+                    <div className="feedback-section">
+                      <p className="feedback-question">Did you get the correct answer?</p>
+                      <div className="feedback-buttons">
+                        <button 
+                          className={`feedback-btn correct ${selectedAnswer === 'correct' ? 'selected' : ''}`}
+                          onClick={handleCorrectAnswer}
+                          disabled={questionStatuses[currentQuestion] && questionStatuses[currentQuestion] !== 'unanswered'}
+                        >
+                          <img src="/icons/tick.svg" alt="tick" className="Quiz-tick" />
+                        </button>
+                        <button 
+                          className={`feedback-btn incorrect ${selectedAnswer === 'incorrect' ? 'selected' : ''}`}
+                          onClick={handleIncorrectAnswer}
+                          disabled={questionStatuses[currentQuestion] && questionStatuses[currentQuestion] !== 'unanswered'}
+                        >
+                          <img src="/icons/cross.svg" alt="cross" className="Quiz-cross" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="nav-buttons">
+                    <button 
+                      className="btn-back" 
+                      onClick={handlePrevious}
+                      disabled={currentQuestion === 1}
+                      style={{ opacity: currentQuestion === 1 ? 0.3 : 1 }}
+                    >
+                      ← 
+                    </button>
+                    <button className="btn-text" onClick={handleEndSession}>
+                      End session
+                    </button>
+                    <button 
+                      className="btn-next" 
+                      onClick={handleNext}
+                    >
+                      Next →
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -282,7 +425,80 @@ const QuizPage = () => {
           position: relative;
         }
 
-        /* Sidebar */
+        /* Loading and Error States */
+        .loading-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 60px;
+          gap: 20px;
+        }
+
+        .spinner {
+          width: 48px;
+          height: 48px;
+          border: 4px solid rgba(103, 80, 164, 0.2);
+          border-top-color: rgba(103, 80, 164, 1);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        .error-state {
+          background: rgba(244, 67, 54, 0.1);
+          border: 2px solid rgba(244, 67, 54, 0.3);
+          border-radius: 12px;
+          padding: 32px;
+          text-align: center;
+        }
+
+        .error-state p {
+          color: rgba(244, 67, 54, 1);
+          font-size: 16px;
+          margin-bottom: 16px;
+        }
+
+        .btn-retry {
+          padding: 12px 24px;
+          background: rgba(244, 67, 54, 1);
+          color: white;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: 500;
+          transition: all 0.2s;
+        }
+
+        .btn-retry:hover {
+          background: rgba(234, 57, 44, 1);
+          transform: translateY(-2px);
+        }
+
+        /* Solution Steps */
+        .solution-step {
+          margin-bottom: 16px;
+          padding: 12px;
+          background: rgba(255, 255, 255, 0.5);
+          border-radius: 8px;
+        }
+
+        .step-title {
+          font-weight: 600;
+          color: rgba(103, 80, 164, 1);
+          margin-bottom: 8px;
+        }
+
+        .step-work {
+          font-family: 'Courier New', monospace;
+          color: #333;
+          white-space: pre-wrap;
+        }
+
         .sidebar {
           width: 174px;
           min-width: 174px;
@@ -299,7 +515,7 @@ const QuizPage = () => {
           transition: all 0.3s ease;
         }
         
-         .sidebar.collapsed {
+        .sidebar.collapsed {
           width: 80px;
           min-width: 80px;
           padding: 44px 12px 20px;
@@ -321,7 +537,7 @@ const QuizPage = () => {
           align-self: flex-start;
         }
         
-         .menu-button:hover {
+        .menu-button:hover {
           background: rgba(255, 255, 255, 0.2);
           transform: scale(1.05);
         }
@@ -367,8 +583,9 @@ const QuizPage = () => {
           color: rgba(74, 68, 89, 1);
         }
 
-        .nav-icon {
-          font-size: 20px;
+        .nav-item img {
+          width: 24px;
+          height: 24px;
           flex-shrink: 0;
         }
         
@@ -380,7 +597,6 @@ const QuizPage = () => {
           display: none;
         }
 
-        /* Main Content */
         .main-content {
           flex: 1;
           padding: 40px 40px 60px;
@@ -481,12 +697,6 @@ const QuizPage = () => {
           color: #333;
         }
 
-        .solution-detail {
-          color: #666;
-          font-style: italic;
-        }
-
-        /* Action Buttons */
         .action-buttons {
           display: flex;
           gap: 20px;
@@ -510,12 +720,26 @@ const QuizPage = () => {
           background: #f5f5f5;
           transform: translateY(-2px);
         }
-
-        .btn-outline:active {
-          transform: translateY(0);
-        }
         
-        /* Feedback Section */
+        .btn-primary {
+          padding: 14px 32px;
+          font-size: 16px;
+          font-weight: 500;
+          border: none;
+          background: rgba(103, 80, 164, 1);
+          color: white;
+          border-radius: 50px;
+          cursor: pointer;
+          transition: all 0.3s;
+          font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary:hover {
+          background: rgba(93, 70, 154, 1);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(103, 80, 164, 0.3);
+        }
+
         .feedback-section {
           background: white;
           border-radius: 30px;
@@ -527,9 +751,9 @@ const QuizPage = () => {
           align-items: center;
           gap: 20px;
           border: 2px solid rgba(230, 230, 230, 1);
-        } 
-        
-         .feedback-question {
+        }
+
+        .feedback-question {
           font-size: 18px;
           font-weight: 500;
           color: #333;
@@ -557,28 +781,6 @@ const QuizPage = () => {
           padding: 0;
         }
 
-        .feedback-btn::before {
-          content: '';
-          position: absolute;
-          top: -4px;
-          left: -4px;
-          right: -4px;
-          bottom: -4px;
-          border-radius: 50%;
-          border: 3px solid transparent;
-          transition: all 0.3s;
-        }
-
-        .feedback-btn.correct.selected::before {
-          border-color: rgba(76, 175, 80, 1);
-          box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.2);
-        }
-
-        .feedback-btn.incorrect.selected::before {
-          border-color: rgba(244, 67, 54, 1);
-          box-shadow: 0 0 0 4px rgba(244, 67, 54, 0.2);
-        }
-
         .feedback-btn.correct.selected {
           background: rgba(76, 175, 80, 0.1);
           border-color: rgba(76, 175, 80, 1);
@@ -591,71 +793,6 @@ const QuizPage = () => {
           transform: scale(1.1);
         }
 
-        .feedback-btn:hover:not(:disabled):not(.selected) {
-          transform: scale(1.05);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .feedback-btn.correct:hover:not(:disabled):not(.selected) {
-          background: rgba(76, 175, 80, 0.05);
-          border-color: rgba(76, 175, 80, 0.3);
-        }
-
-        .feedback-btn.incorrect:hover:not(:disabled):not(.selected) {
-          background: rgba(244, 67, 54, 0.05);
-          border-color: rgba(244, 67, 54, 0.3);
-        }
-
-        .feedback-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .feedback-btn:active:not(:disabled) {
-          transform: scale(1.05);
-        }
-
-        .feedback-icon-img {
-          width: 32px;
-          height: 32px;
-          object-fit: contain;
-          transition: all 0.3s;
-        }
-
-        .feedback-btn.selected .feedback-icon-img {
-          filter: brightness(1.2);
-        }
-
-        .feedback-icon {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        
-        .btn-primary {
-          padding: 14px 32px;
-          font-size: 16px;
-          font-weight: 500;
-          border: none;
-          background: rgba(103, 80, 164, 1);
-          color: white;
-          border-radius: 50px;
-          cursor: pointer;
-          transition: all 0.3s;
-          font-family: 'Inter', sans-serif;
-        }
-
-        .btn-primary:hover {
-          background: rgba(93, 70, 154, 1);
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(103, 80, 164, 0.3);
-        }
-
-        .btn-primary:active {
-          transform: translateY(0);
-        }
-
-        /* Navigation Buttons */
         .nav-buttons {
           display: flex;
           justify-content: space-between;
@@ -679,10 +816,6 @@ const QuizPage = () => {
           background: rgba(0, 0, 0, 0.05);
         }
 
-        .btn-back:disabled {
-          cursor: not-allowed;
-        }
-
         .btn-text {
           background: none;
           border: none;
@@ -691,10 +824,6 @@ const QuizPage = () => {
           cursor: pointer;
           color: #333;
           font-family: 'Inter', sans-serif;
-        }
-
-        .btn-text:hover {
-          color: #000;
         }
 
         .btn-next {
@@ -715,7 +844,6 @@ const QuizPage = () => {
           transform: translateX(4px);
         }
 
-        /* Progress Sidebar */
         .progress-sidebar {
           width: 300px;
           min-width: 300px;
@@ -805,14 +933,13 @@ const QuizPage = () => {
           font-weight: 500;
         }
 
-        /* Responsive */
         @media(max-width: 1400px) {
           .progress-sidebar {
             width: 250px;
             min-width: 250px;
           }
 
-            .main-content.sidebar-expanded {
+          .main-content.sidebar-expanded {
             max-width: calc(100vw - 174px - 250px);
           }
 
@@ -842,7 +969,7 @@ const QuizPage = () => {
             padding: 44px 12px 20px;
           }
 
-           .sidebar.collapsed {
+          .sidebar.collapsed {
             width: 60px;
             min-width: 60px;
             padding: 44px 8px 20px;
