@@ -6,9 +6,25 @@ import Link from 'next/link';
 const HomePage = () => {
   const router = useRouter()
   const [sidebarExpanded, setSidebarExpanded] = useState(true)
+  const [userName, setUserName] = useState('Ally lee')
+  const [statusMessage, setStatusMessage] = useState('Im cooked')
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [isEditingStatus, setIsEditingStatus] = useState(false)
 
   const toggleSidebar = () => {
     setSidebarExpanded(!sidebarExpanded)
+  }
+
+   const handleNameSubmit = (e) => {
+    if (e.key === 'Enter' || e.type === 'blur') {
+      setIsEditingName(false)
+    }
+  }
+
+  const handleStatusSubmit = (e) => {
+    if (e.key === 'Enter' || e.type === 'blur') {
+      setIsEditingStatus(false)
+    }
   }
 
   const handleTopicalQuizClick = () => {
@@ -18,8 +34,7 @@ const HomePage = () => {
   }
 
   const handlePastYearPaperClick = () => {
-    // Add navigation for past year paper if needed
-    console.log('Past Year Paper clicked')
+    router.push('/pyp')
   }
 
   return (
@@ -41,22 +56,29 @@ const HomePage = () => {
                 <img src="/icons/HomeIcon2.png" alt="Home" />
                 {sidebarExpanded && <span className="nav-text">Home</span>}
               </div>
-      
-              <Link href="/profile">
-              <div className="nav-item">
+              <div className="nav-item" onClick={() => router.push('/profile')}>
                 <img src="/icons/ProfileIcon2.png" alt="Profile" />
                 {sidebarExpanded && <span className="nav-text">Profile</span>}
               </div>
-              </Link>
-              <Link href="/topicspage">
-              <div className="nav-item">
-                <img src="/icons/ContentIcon1.png" alt="Content" />
-                {sidebarExpanded && <span className="nav-text">Content</span>}
+              <div className="nav-item-parent">
+                <div className="nav-item-main">
+                  <img src="/icons/ContentIcon1.png" alt="Content" />
+                  {sidebarExpanded && <span className="nav-text">Content</span>}
+                </div>
+                {sidebarExpanded && (
+                  <div className="nav-subitems">
+                    <div className="nav-subitem" onClick={() => router.push('/topicspage')}>
+                      Topics
+                    </div>
+                    <div className="nav-subitem" onClick={() => router.push('/pyp')}>
+                      PYP
+                    </div>
+                  </div>
+                )}
               </div>
-              </Link>
-              <div className="nav-item">
+              <div className="nav-item" onClick={() => router.push('/activitystatspage')}>
                 <img src="/icons/ActivityIcon2.png" alt="Activity" />
-                {sidebarExpanded && <span className="nav-text">Activity Stats</span>}
+                {sidebarExpanded && <span className="nav-text">Activity <p/> Stats</span>}
               </div>
             </nav>
           </div>
@@ -113,23 +135,65 @@ const HomePage = () => {
             </div>
 
             {/* Profile Sidebar */}
-            <div className="profile-sidebar">
-              <div className="profile-card">
-                <div className="profile-header">
-                  <div className="speech-bubble">Im cooked</div>
-                  <img src="/3d-avatar-12.png" alt="Avatar" className="profile-avatar" />
+            <div className="topicspage-profile">
+              <div className="topicspage-profile-header">
+                <img src="/3d-avatar-12.png" alt="Avatar" className="topicspage-avatars3davatar12" />
+                <div className="topicspage-SpeechBubble">
+                  {isEditingStatus ? (
+                    <input
+                      type="text"
+                      value={statusMessage}
+                      onChange={(e) => setStatusMessage(e.target.value)}
+                      onBlur={handleStatusSubmit}
+                      onKeyPress={handleStatusSubmit}
+                      className="topicspage-status-input"
+                      autoFocus
+                      maxLength={20}
+                    />
+                  ) : (
+                    <span 
+                      className="topicspage-text11"
+                      onClick={() => setIsEditingStatus(true)}
+                    >
+                      {statusMessage}
+                    </span>
+                  )}
                 </div>
-                <div className="profile-name">
-                  <span>Ally lee</span>
-                  <img src="/edit.png" alt="Edit" className="edit-icon" />
+                <div className="topicspage-name-section">
+                  {isEditingName ? (
+                    <input
+                      type="text"
+                      value={userName}
+                      onChange={(e) => setUserName(e.target.value)}
+                      onBlur={handleNameSubmit}
+                      onKeyPress={handleNameSubmit}
+                      className="topicspage-name-input"
+                      autoFocus
+                      maxLength={30}
+                    />
+                  ) : (
+                    <span 
+                      className="topicspage-text12"
+                      onClick={() => setIsEditingName(true)}
+                    >
+                      {userName}
+                    </span>
+                  )}
+                  <img 
+                    src="/edit.png" 
+                    alt="Edit" 
+                    className="topicspage-edit"
+                    onClick={() => setIsEditingName(true)}
+                  />
                 </div>
               </div>
-
-              <div className="friends-section">
-                <img src="/GenericAvatar.png" alt="Friends" className="friends-icon" />
-                <span className="friends-text">4 Friends Online</span>
-                <div className="avatar-group">
-                  <img src="/AvatarGroup.png" alt="Friend avatars" className="avatar-group-img" />
+              
+              <div className="topicspage-group11">
+                <img src="/GenericAvatar.png" alt="Avatar" className="topicspage-genericavatar" />
+                <span className="topicspage-text13">4 Friends Online</span>
+                <div className="topicspage-avatar-group">
+                  <img src="/AvatarGroup.png" alt="Avatars" className="topicspage-avatargroup" />
+                  <div className="topicspage-overflow">+1</div>
                 </div>
               </div>
             </div>
@@ -215,11 +279,10 @@ const HomePage = () => {
           gap: 8px;
         }
 
-        .nav-item {
+        .nav-item,
+        .nav-item-parent {
           display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 16px;
+          flex-direction: column;
           border-radius: 100px;
           cursor: pointer;
           transition: background-color 0.2s;
@@ -228,6 +291,36 @@ const HomePage = () => {
           font-family: Roboto, sans-serif;
           font-weight: 500;
           white-space: nowrap;
+        }
+
+        .nav-item {
+          align-items: center;
+          gap: 12px;
+          padding: 16px;
+          flex-direction: row;
+        }
+
+        .nav-item-parent {
+          border-radius: 20px;
+          padding: 0;
+        }
+
+        .nav-item.active {
+          background-color: rgba(232, 222, 248, 1);
+          color: rgba(74, 68, 89, 1);
+        }
+
+        .nav-item-parent.active {
+          background-color: rgba(232, 222, 248, 1);
+          color: rgba(74, 68, 89, 1);
+        }
+
+        .nav-item-main {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 16px;
+          color: rgba(255, 255, 255, 0.9);
         }
 
         .sidebar.collapsed .nav-item {
@@ -239,9 +332,35 @@ const HomePage = () => {
           background-color: rgba(255, 255, 255, 0.1);
         }
 
-        .nav-item.active {
-          background-color: rgba(232, 222, 248, 1);
+                .nav-item-parent:not(.active) .nav-item-main:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+          border-radius: 20px;
+        }
+
+        .nav-subitems {
+          display: flex;
+          flex-direction: column;
+          padding: 0 16px 12px 16px;
+          gap: 4px;
+        }
+
+        .nav-subitem {
+          padding: 10px 16px;
+          font-size: 13px;
+          border-radius: 12px;
+          cursor: pointer;
+          transition: background-color 0.2s;
+          color: rgba(74, 68, 89, 0.8);
+        }
+
+        .nav-subitem:hover {
+          background-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .nav-subitem.active-sub {
+          background-color: rgba(103, 80, 164, 0.2);
           color: rgba(74, 68, 89, 1);
+          font-weight: 600;
         }
 
         .nav-item img {
@@ -446,109 +565,166 @@ const HomePage = () => {
           margin: 0;
         }
 
-        /* Profile Sidebar */
-        .profile-sidebar {
+        /* Profile section */
+        .topicspage-profile {
           width: 360px;
           min-width: 360px;
           max-width: 360px;
           height: fit-content;
           display: flex;
           flex-direction: column;
-          gap: 20px;
           position: sticky;
           top: 50px;
-        }
-
-        .profile-card {
           background: white;
           border-radius: 32px;
           padding: 32px 28px;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .topicspage-profile-header {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 20px;
-        }
-
-        .profile-header {
+          gap: 16px;
+          margin-bottom: 24px;
           position: relative;
-          display: flex;
-          justify-content: center;
-          width: 100%;
         }
 
-        .speech-bubble {
-          position: absolute;
-          top: -10px;
-          right: 40px;
-          background: rgba(255, 182, 193, 1);
-          padding: 10px 18px;
-          border-radius: 18px;
-          font-size: 15px;
-          font-weight: 500;
-          font-family: 'Inter', sans-serif;
-          color: rgba(28, 42, 58, 1);
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-          white-space: nowrap;
-        }
-
-        .profile-avatar {
+        .topicspage-avatars3davatar12 {
           width: 120px;
           height: 120px;
           border-radius: 50%;
           object-fit: cover;
         }
 
-        .profile-name {
+        .topicspage-SpeechBubble {
+          position: absolute;
+          top: -15px;
+          right: 15px;
+          background: white;
+          padding: 10px 18px;
+          border-radius: 18px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .topicspage-SpeechBubble:hover {
+          transform: scale(1.02);
+          box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .topicspage-text11 {
+          color: rgba(0, 0, 0, 1);
+          font-size: 15px;
+          font-style: normal;
+          font-family: Roboto, sans-serif;
+          font-weight: 500;
+          margin: 0;
+          cursor: pointer;
+        }
+
+        .topicspage-status-input {
+          border: none;
+          outline: none;
+          font-size: 15px;
+          font-family: Roboto, sans-serif;
+          font-weight: 500;
+          color: rgba(0, 0, 0, 1);
+          background: transparent;
+          width: 100%;
+          padding: 0;
+        }
+
+        .topicspage-name-section {
           display: flex;
           align-items: center;
           gap: 10px;
-          font-size: 28px;
-          font-weight: 700;
-          font-family: 'Magra', sans-serif;
-          color: rgba(28, 42, 58, 1);
         }
 
-        .edit-icon {
+        .topicspage-text12 {
+          color: rgba(0, 0, 0, 1);
+          font-size: 28px;
+          font-style: normal;
+          font-family: Magra, sans-serif;
+          font-weight: 700;
+          margin: 0;
+          cursor: pointer;
+          transition: color 0.2s;
+        }
+
+        .topicspage-text12:hover {
+          color: rgba(74, 68, 89, 1);
+        }
+
+        .topicspage-name-input {
+          border: none;
+          outline: none;
+          font-size: 28px;
+          font-family: Magra, sans-serif;
+          font-weight: 700;
+          color: rgba(0, 0, 0, 1);
+          background: transparent;
+          padding: 0;
+          border-bottom: 2px solid rgba(74, 68, 89, 1);
+        }
+
+        .topicspage-edit {
           width: 22px;
           height: 22px;
           cursor: pointer;
-          opacity: 0.6;
-          transition: opacity 0.2s;
+          transition: transform 0.2s;
         }
 
-        .edit-icon:hover {
-          opacity: 1;
+        .topicspage-edit:hover {
+          transform: scale(1.1);
         }
 
-        .friends-section {
-          background: white;
+        .topicspage-group11 {
+          width: 100%;
+          background: rgba(245, 245, 245, 1);
           border-radius: 22px;
-          padding: 18px 20px;
+          padding: 18px;
           display: flex;
           align-items: center;
           gap: 12px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         }
 
-        .friends-icon {
+        .topicspage-genericavatar {
           width: 30px;
           height: 30px;
           border-radius: 50%;
           flex-shrink: 0;
         }
 
-        .friends-text {
+        .topicspage-text13 {
+          color: rgba(0, 0, 0, 1);
           font-size: 15px;
+          font-family: Roboto, sans-serif;
           font-weight: 500;
-          font-family: 'Inter', sans-serif;
-          color: rgba(28, 42, 58, 1);
           flex: 1;
+          white-space: nowrap;
         }
 
-        .avatar-group-img {
+        .topicspage-avatar-group {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          flex-shrink: 0;
+        }
+
+        .topicspage-avatargroup {
           height: 28px;
           width: auto;
+        }
+
+        .topicspage-overflow {
+          background: rgba(230, 230, 230, 1);
+          border-radius: 6px;
+          padding: 4px 7px;
+          font-size: 12px;
+          color: rgba(100, 100, 100, 1);
+          font-family: Roboto, sans-serif;
         }
 
         /* Responsive */

@@ -2,5 +2,11 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/": "pages/index.js"
+  "/quiz": "pages/quiz.js",
+  "/": "pages/index.js",
+  "/topicspage": "pages/topicspage.js",
+  "/404": "pages/404.js",
+  "/pyp": "pages/pyp.js",
+  "/profile": "pages/profile.js",
+  "/activitystatspage": "pages/activitystatspage.js"
 }

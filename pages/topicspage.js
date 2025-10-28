@@ -6,7 +6,11 @@ import Link from 'next/link';
 const Topicspage = () => {
   const router = useRouter()
   const [sidebarExpanded, setSidebarExpanded] = useState(true)
-  
+  const [userName, setUserName] = useState('Ally lee')
+  const [statusMessage, setStatusMessage] = useState('Im cooked')
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [isEditingStatus, setIsEditingStatus] = useState(false)
+
   const handleTopicClick = (topicName, topicTitle) => {
     // Navigate to quiz page with topic information
     router.push({
@@ -22,6 +26,18 @@ const Topicspage = () => {
     setSidebarExpanded(!sidebarExpanded)
   }
 
+  const handleNameSubmit = (e) => {
+    if (e.key === 'Enter' || e.type === 'blur') {
+      setIsEditingName(false)
+    }
+  }
+
+  const handleStatusSubmit = (e) => {
+    if (e.key === 'Enter' || e.type === 'blur') {
+      setIsEditingStatus(false)
+    }
+  }
+
   return (
     <>
       <div className="topicspage-container1">
@@ -34,43 +50,37 @@ const Topicspage = () => {
           <div className={`topicspage-navigation-rail-expanded ${sidebarExpanded ? 'expanded' : 'collapsed'}`}>
             <div className="topicspage-menu-fab">
               <button className="topicspage-iconbuttonstandard" onClick={toggleSidebar}>
-                <div className="topicspage-content">
-                  <div className="topicspage-statelayer1">
-                    <div className="topicspage-menuicon">{sidebarExpanded ? '✕' : '☰'}</div>
-                  </div>
-                </div>
+                <div className="topicspage-menuicon">{sidebarExpanded ? '✕' : '☰'}</div>
               </button>
             </div>
             <div className="topicspage-segments">
-              
-              <div className="topicspage-navitem01">
-                 <Link href="/">
-                <div className="topicspage-statelayer2">
-                 
-                  <img src="/icons/HomeIcon2.png" alt="Home" className="topicspage-homeicon2" />
-                  {sidebarExpanded && <span className="topicspage-text23 M3labellarge">Home</span>}
-                  
-                </div>
-                </Link>
+              <div className="topicspage-navitem01" onClick={() => router.push('/')}>
+                <img src="/icons/HomeIcon2.png" alt="Home" className="topicspage-icon" />
+                {sidebarExpanded && <span className="topicspage-text">Home</span>}
               </div>
-              
-              <div className="topicspage-navitem02">
-                <div className="topicspage-statelayer3">
-                  <img src="/icons/ProfileIcon2.png" alt="Profile" className="topicspage-profileicon2" />
-                  {sidebarExpanded && <span className="topicspage-text24 M3labellarge">Profile</span>}
-                </div>
+              <div className="topicspage-navitem02" onClick={() => router.push('/profile')}>
+                <img src="/icons/ProfileIcon2.png" alt="Profile" className="topicspage-icon" />
+                {sidebarExpanded && <span className="topicspage-text">Profile</span>}
               </div>
-              <div className="topicspage-navitem03">
-                <div className="topicspage-statelayer4">
-                  <img src="/icons/ContentIcon1.png" alt="Content" className="topicspage-contenticon1" />
-                  {sidebarExpanded && <span className="topicspage-text25 M3labellarge">Content</span>}
+              <div className="topicspage-navitem-parent active">
+                <div className="topicspage-navitem-main">
+                  <img src="/icons/ContentIcon1.png" alt="Content" className="topicspage-icon" />
+                  {sidebarExpanded && <span className="topicspage-text">Content</span>}
                 </div>
+                {sidebarExpanded && (
+                  <div className="topicspage-nav-subitems">
+                    <div className="topicspage-nav-subitem active-sub" onClick={() => router.push('/topicspage')}>
+                      Topics
+                    </div>
+                    <div className="topicspage-nav-subitem" onClick={() => router.push('/pyp')}>
+                      PYP
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="topicspage-navitem04">
-                <div className="topicspage-statelayer5">
-                  <img src="/icons/ActivityIcon2.png" alt="Activity" className="topicspage-activityicon2" />
-                  {sidebarExpanded && <span className="topicspage-text26 M3labellarge">Activity<p/> Stats</span>}
-                </div>
+              <div className="topicspage-navitem04" onClick={() => router.push('/activitystatspage')}>
+                <img src="/icons/ActivityIcon2.png" alt="Activity" className="topicspage-icon" />
+                {sidebarExpanded && <span className="topicspage-text">Activity <p/> Stats</span>}
               </div>
             </div>
           </div>
@@ -140,6 +150,231 @@ const Topicspage = () => {
                     <span className="topicspage-text22">2,453 students</span>
                   </div>
                 </button>
+
+                {/* Card 5 - Exponential and Logarithmic Functions */}
+                <button 
+                  className="topicspage-group49"
+                  onClick={() => handleTopicClick('exponential-logarithmic', 'Exponential and Logarithmic Functions')}
+                >
+                  <img src="/topic5.png" alt="Mountain lake" className="topicspage-rectangle20" />
+                  <div className="topicspage-card-content">
+                    <div className="topicspage-card-title">
+                      <img src="/icon5.png" alt="Icon" className="topicspage-group3" />
+                      <span className="topicspage-text15">Exponential and Logarithmic Functions</span>
+                    </div>
+                    <span className="topicspage-text16">2,453 students</span>
+                  </div>
+                </button>
+
+                {/* Card 6 - Binomial Theorem */}
+                <button 
+                  className="topicspage-group50"
+                  onClick={() => handleTopicClick('binomial-theorem', 'Binomial Theorem')}
+                >
+                  <img src="/topic6.png" alt="Forest path" className="topicspage-rectangle21" />
+                  <div className="topicspage-card-content">
+                    <div className="topicspage-card-title">
+                      <img src="/icon6.png" alt="Icon" className="topicspage-group4" />
+                      <span className="topicspage-text17">Binomial Theorem</span>
+                    </div>
+                    <span className="topicspage-text18">2,453 students</span>
+                  </div>
+                </button>
+
+                {/* Card 7 - Coordinate Geometry */}
+                <button 
+                  className="topicspage-group52"
+                  onClick={() => handleTopicClick('coordinate-geometry', 'Coordinate Geometry')}
+                >
+                  <img src="/topic7.png" alt="Waterfall" className="topicspage-rectangle22" />
+                  <div className="topicspage-card-content">
+                    <div className="topicspage-card-title">
+                      <img src="/icon7.png" alt="Icon" className="topicspage-group51" />
+                      <span className="topicspage-text19">Coordinate Geometry</span>
+                    </div>
+                    <span className="topicspage-text20">2,453 students</span>
+                  </div>
+                </button>
+
+                {/* Card 8 - Circles */}
+                <button 
+                  className="topicspage-group54"
+                  onClick={() => handleTopicClick('circles', 'Circles')}
+                >
+                  <img src="/topic8.png" alt="Winter village" className="topicspage-rectangle23" />
+                  <div className="topicspage-card-content">
+                    <div className="topicspage-card-title">
+                      <img src="/icon8.png" alt="Icon" className="topicspage-group53" />
+                      <span className="topicspage-text21">Circles</span>
+                    </div>
+                    <span className="topicspage-text22">2,453 students</span>
+                  </div>
+                </button>
+
+                {/* Card 9 - Application of Straight Line Graphs */}
+                <button 
+                  className="topicspage-group49"
+                  onClick={() => handleTopicClick('straight-line-graphs', 'Application of Straight Line Graphs')}
+                >
+                  <img src="/topic9.png" alt="Desert sunset" className="topicspage-rectangle20" />
+                  <div className="topicspage-card-content">
+                    <div className="topicspage-card-title">
+                      <img src="/icon9.png" alt="Icon" className="topicspage-group3" />
+                      <span className="topicspage-text15">Application of Straight Line Graphs</span>
+                    </div>
+                    <span className="topicspage-text16">2,453 students</span>
+                  </div>
+                </button>
+
+                {/* Card 10 - Trigonometric Functions */}
+                <button 
+                  className="topicspage-group50"
+                  onClick={() => handleTopicClick('trigonometric-functions', 'Trigonometric Functions')}
+                >
+                  <img src="/topic10.png" alt="Savanna" className="topicspage-rectangle21" />
+                  <div className="topicspage-card-content">
+                    <div className="topicspage-card-title">
+                      <img src="/icon10.png" alt="Icon" className="topicspage-group4" />
+                      <span className="topicspage-text17">Trigonometric Functions</span>
+                    </div>
+                    <span className="topicspage-text18">2,453 students</span>
+                  </div>
+                </button>
+
+                {/* Card 11 - Trigonometric Identities and Equations */}
+                <button 
+                  className="topicspage-group52"
+                  onClick={() => handleTopicClick('trig-identities', 'Trigonometric Identities and Equations')}
+                >
+                  <img src="/topic11.png" alt="Misty lake" className="topicspage-rectangle22" />
+                  <div className="topicspage-card-content">
+                    <div className="topicspage-card-title">
+                      <img src="/icon11.png" alt="Icon" className="topicspage-group51" />
+                      <span className="topicspage-text19">Trigonometric Identities and Equations</span>
+                    </div>
+                    <span className="topicspage-text20">2,453 students</span>
+                  </div>
+                </button>
+
+                {/* Card 12 - Differentiation */}
+                <button 
+                  className="topicspage-group54"
+                  onClick={() => handleTopicClick('differentiation', 'Differentiation')}
+                >
+                  <img src="/topic12.png" alt="Beach sunset" className="topicspage-rectangle23" />
+                  <div className="topicspage-card-content">
+                    <div className="topicspage-card-title">
+                      <img src="/icon12.png" alt="Icon" className="topicspage-group53" />
+                      <span className="topicspage-text21">Differentiation</span>
+                    </div>
+                    <span className="topicspage-text22">2,453 students</span>
+                  </div>
+                </button>
+
+                {/* Card 13 - Tangents, Normals and Rates of Change */}
+                <button 
+                  className="topicspage-group49"
+                  onClick={() => handleTopicClick('tangents-normals', 'Tangents, Normals and Rates of Change')}
+                >
+                  <img src="/topic13.png" alt="Forest morning" className="topicspage-rectangle20" />
+                  <div className="topicspage-card-content">
+                    <div className="topicspage-card-title">
+                      <img src="/icon13.png" alt="Icon" className="topicspage-group3" />
+                      <span className="topicspage-text15">Tangents, Normals and Rates of Change</span>
+                    </div>
+                    <span className="topicspage-text16">2,453 students</span>
+                  </div>
+                </button>
+
+                {/* Card 14 - Maxima and Minima */}
+                <button 
+                  className="topicspage-group50"
+                  onClick={() => handleTopicClick('maxima-minima', 'Maxima and Minima')}
+                >
+                  <img src="/topic14.png" alt="Desert dusk" className="topicspage-rectangle21" />
+                  <div className="topicspage-card-content">
+                    <div className="topicspage-card-title">
+                      <img src="/icon14.png" alt="Icon" className="topicspage-group4" />
+                      <span className="topicspage-text17">Maxima and Minima</span>
+                    </div>
+                    <span className="topicspage-text18">2,453 students</span>
+                  </div>
+                </button>
+
+                {/* Card 15 - Differentiation of Trigonometric Functions */}
+                <button 
+                  className="topicspage-group52"
+                  onClick={() => handleTopicClick('diff-trig', 'Differentiation of Trigonometric, Exponential and Logarithmic Functions')}
+                >
+                  <img src="/topic15.png" alt="Ocean stars" className="topicspage-rectangle22" />
+                  <div className="topicspage-card-content">
+                    <div className="topicspage-card-title">
+                      <img src="/icon15.png" alt="Icon" className="topicspage-group51" />
+                      <span className="topicspage-text19">Differentiation of Trigonometric, Exponential and Logarithmic Functions</span>
+                    </div>
+                    <span className="topicspage-text20">2,453 students</span>
+                  </div>
+                </button>
+
+                {/* Card 16 - Integration */}
+                <button 
+                  className="topicspage-group54"
+                  onClick={() => handleTopicClick('integration', 'Integration')}
+                >
+                  <img src="/topic16.png" alt="Cactus sunset" className="topicspage-rectangle23" />
+                  <div className="topicspage-card-content">
+                    <div className="topicspage-card-title">
+                      <img src="/icon16.png" alt="Icon" className="topicspage-group53" />
+                      <span className="topicspage-text21">Integration</span>
+                    </div>
+                    <span className="topicspage-text22">2,453 students</span>
+                  </div>
+                </button>
+
+                {/* Card 17 - Applications of Integration */}
+                <button 
+                  className="topicspage-group49"
+                  onClick={() => handleTopicClick('applications-integration', 'Applications of Integration')}
+                >
+                  <img src="/topic17.png" alt="Ocean depths" className="topicspage-rectangle20" />
+                  <div className="topicspage-card-content">
+                    <div className="topicspage-card-title">
+                      <img src="/icon17.png" alt="Icon" className="topicspage-group3" />
+                      <span className="topicspage-text15">Applications of Integration</span>
+                    </div>
+                    <span className="topicspage-text16">2,453 students</span>
+                  </div>
+                </button>
+
+                {/* Card 18 - Kinematics */}
+                <button 
+                  className="topicspage-group50"
+                  onClick={() => handleTopicClick('kinematics', 'Kinematics')}
+                >
+                  <img src="/topic18.png" alt="Aurora" className="topicspage-rectangle21" />
+                  <div className="topicspage-card-content">
+                    <div className="topicspage-card-title">
+                      <img src="/icon18.png" alt="Icon" className="topicspage-group4" />
+                      <span className="topicspage-text17">Kinematics</span>
+                    </div>
+                    <span className="topicspage-text18">2,453 students</span>
+                  </div>
+                </button>
+
+                {/* Card 19 - Plane Geometry */}
+                <button 
+                  className="topicspage-group52"
+                  onClick={() => handleTopicClick('plane-geometry', 'Plane Geometry')}
+                >
+                  <img src="/topic19.png" alt="Galaxy" className="topicspage-rectangle22" />
+                  <div className="topicspage-card-content">
+                    <div className="topicspage-card-title">
+                      <img src="/icon19.png" alt="Icon" className="topicspage-group51" />
+                      <span className="topicspage-text19">Plane Geometry</span>
+                    </div>
+                    <span className="topicspage-text20">2,453 students</span>
+                  </div>
+                </button>
               </div>
             </div>
 
@@ -148,11 +383,52 @@ const Topicspage = () => {
               <div className="topicspage-profile-header">
                 <img src="/3d-avatar-12.png" alt="Avatar" className="topicspage-avatars3davatar12" />
                 <div className="topicspage-SpeechBubble">
-                  <span className="topicspage-text11">Im cooked</span>
+                  {isEditingStatus ? (
+                    <input
+                      type="text"
+                      value={statusMessage}
+                      onChange={(e) => setStatusMessage(e.target.value)}
+                      onBlur={handleStatusSubmit}
+                      onKeyPress={handleStatusSubmit}
+                      className="topicspage-status-input"
+                      autoFocus
+                      maxLength={20}
+                    />
+                  ) : (
+                    <span 
+                      className="topicspage-text11"
+                      onClick={() => setIsEditingStatus(true)}
+                    >
+                      {statusMessage}
+                    </span>
+                  )}
                 </div>
                 <div className="topicspage-name-section">
-                  <span className="topicspage-text12">Ally lee</span>
-                  <img src="/edit.png" alt="Edit" className="topicspage-edit" />
+                  {isEditingName ? (
+                    <input
+                      type="text"
+                      value={userName}
+                      onChange={(e) => setUserName(e.target.value)}
+                      onBlur={handleNameSubmit}
+                      onKeyPress={handleNameSubmit}
+                      className="topicspage-name-input"
+                      autoFocus
+                      maxLength={30}
+                    />
+                  ) : (
+                    <span 
+                      className="topicspage-text12"
+                      onClick={() => setIsEditingName(true)}
+                    >
+                      {userName}
+                    </span>
+                  )}
+                  <img 
+                    src="/edit.png" 
+                    alt="Edit" 
+                    className="topicspage-edit"
+                    onClick={() => setIsEditingName(true)}
+                  />
                 </div>
               </div>
               
@@ -161,13 +437,14 @@ const Topicspage = () => {
                 <span className="topicspage-text13">4 Friends Online</span>
                 <div className="topicspage-avatar-group">
                   <img src="/AvatarGroup.png" alt="Avatars" className="topicspage-avatargroup" />
+                  <div className="topicspage-overflow">+1</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      
+
       <style jsx>
         {`
           /* Reset and base styles */
@@ -254,25 +531,7 @@ const Topicspage = () => {
             transform: scale(1.05);
           }
 
-          .topicspage-content {
-            width: 56px;
-            display: flex;
-            overflow: hidden;
-            align-items: center;
-            flex-shrink: 0;
-            border-radius: 16px;
-            flex-direction: column;
-            justify-content: center;
-          }
-
-          .topicspage-statelayer1 {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
-          }
-
-          .topicspage-menuicon {
+           .topicspage-menuicon {
             width: 24px;
             height: 24px;
             display: flex;
@@ -294,14 +553,18 @@ const Topicspage = () => {
           .topicspage-navitem02,
           .topicspage-navitem03,
           .topicspage-navitem04 {
-            gap: 12px;
             display: flex;
-            width: 100%;
-            overflow: hidden;
             align-items: center;
+            gap: 12px;
+            padding: 16px;
+            width: 100%;
             border-radius: 100px;
             cursor: pointer;
             transition: background-color 0.2s;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            font-family: Roboto, sans-serif;
+            font-weight: 500;
           }
 
           .topicspage-navigation-rail-expanded.collapsed .topicspage-navitem01,
@@ -317,68 +580,25 @@ const Topicspage = () => {
             background-color: rgba(255, 255, 255, 0.1);
           }
 
-          .topicspage-navitem03 {
-            background-color: var(--dl-color-m3_sys_light-secondarycontainer);
+          .topicspage-navitem03.active {
+            background-color: rgba(232, 222, 248, 1);
+            color: rgba(74, 68, 89, 1);
           }
 
-          .topicspage-statelayer2,
-          .topicspage-statelayer3,
-          .topicspage-statelayer4,
-          .topicspage-statelayer5 {
-            gap: 8px;
-            display: flex;
-            padding: 16px;
-            position: relative;
-            align-items: center;
-            justify-content: flex-start;
-            width: 100%;
-          }
-
-          .topicspage-navigation-rail-expanded.collapsed .topicspage-statelayer2,
-          .topicspage-navigation-rail-expanded.collapsed .topicspage-statelayer3,
-          .topicspage-navigation-rail-expanded.collapsed .topicspage-statelayer4,
-          .topicspage-navigation-rail-expanded.collapsed .topicspage-statelayer5 {
-            justify-content: center;
-            padding: 16px 12px;
-          }
-
-          .topicspage-homeicon2,
-          .topicspage-profileicon2,
-          .topicspage-contenticon1,
-          .topicspage-activityicon2 {
+          .topicspage-icon {
             width: 24px;
             height: 24px;
             flex-shrink: 0;
           }
 
-          .topicspage-text23,
-          .topicspage-text24,
-          .topicspage-text26 {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 14px;
-            font-family: Roboto, sans-serif;
-            font-weight: 500;
-            letter-spacing: 0.1px;
-            white-space: nowrap;
+          .topicspage-text {
             transition: opacity 0.3s;
           }
 
-          .topicspage-text25 {
-            color: var(--dl-color-m3_sys_light-onsecondarycontainer);
-            font-size: 14px;
-            font-family: Roboto, sans-serif;
-            font-weight: 500;
-            letter-spacing: 0.1px;
-            white-space: nowrap;
-            transition: opacity 0.3s;
-          }
-
-          .topicspage-navigation-rail-expanded.collapsed .topicspage-text23,
-          .topicspage-navigation-rail-expanded.collapsed .topicspage-text24,
-          .topicspage-navigation-rail-expanded.collapsed .topicspage-text25,
-          .topicspage-navigation-rail-expanded.collapsed .topicspage-text26 {
+          .topicspage-navigation-rail-expanded.collapsed .topicspage-text {
             display: none;
           }
+
 
           /* Main content area */
           .topicspage-main-content {
@@ -400,6 +620,62 @@ const Topicspage = () => {
             margin-left: 80px;
             width: calc(100vw - 80px);
             max-width: calc(100vw - 80px);
+          }
+
+          .topicspage-navitem-parent {
+            display: flex;
+            flex-direction: column;
+            border-radius: 20px;
+            padding: 0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            font-family: Roboto, sans-serif;
+            font-weight: 500;
+          }
+
+          .topicspage-navitem-parent.active {
+            background-color: rgba(232, 222, 248, 1);
+            color: rgba(74, 68, 89, 1);
+          }
+
+          .topicspage-navitem-main {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+          }
+
+          .topicspage-navitem-parent:not(.active) .topicspage-navitem-main:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+          }
+
+          .topicspage-nav-subitems {
+            display: flex;
+            flex-direction: column;
+            padding: 0 16px 12px 16px;
+            gap: 4px;
+          }
+
+          .topicspage-nav-subitem {
+            padding: 10px 16px;
+            font-size: 13px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            color: rgba(74, 68, 89, 0.8);
+          }
+
+          .topicspage-nav-subitem:hover {
+            background-color: rgba(255, 255, 255, 0.5);
+          }
+
+          .topicspage-nav-subitem.active-sub {
+            background-color: rgba(103, 80, 164, 0.2);
+            color: rgba(74, 68, 89, 1);
+            font-weight: 600;
           }
 
           /* Left section with title and cards */
@@ -576,6 +852,11 @@ const Topicspage = () => {
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
           }
 
+          .topicspage-SpeechBubble:hover {
+            transform: scale(1.02);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+          }
+
           .topicspage-text11 {
             color: rgba(0, 0, 0, 1);
             font-size: 15px;
@@ -583,6 +864,18 @@ const Topicspage = () => {
             font-family: Roboto, sans-serif;
             font-weight: 500;
             margin: 0;
+          }
+
+          .topicspage-status-input {
+            border: none;
+            outline: none;
+            font-size: 15px;
+            font-family: Roboto, sans-serif;
+            font-weight: 500;
+            color: rgba(0, 0, 0, 1);
+            background: transparent;
+            width: 100%;
+            padding: 0;
           }
 
           .topicspage-name-section {
@@ -600,10 +893,30 @@ const Topicspage = () => {
             margin: 0;
           }
 
+          .topicspage-text12:hover {
+            color: rgba(74, 68, 89, 1);
+          }
+
+          .topicspage-name-input {
+            border: none;
+            outline: none;
+            font-size: 28px;
+            font-family: Magra, sans-serif;
+            font-weight: 700;
+            color: rgba(0, 0, 0, 1);
+            background: transparent;
+            padding: 0;
+            border-bottom: 2px solid rgba(74, 68, 89, 1);
+          }
+
           .topicspage-edit {
             width: 22px;
             height: 22px;
             cursor: pointer;
+          }
+
+           .topicspage-edit:hover {
+            transform: scale(1.1);
           }
 
           .topicspage-group11 {
@@ -642,6 +955,15 @@ const Topicspage = () => {
           .topicspage-avatargroup {
             height: 28px;
             width: auto;
+          }
+
+          .topicspage-overflow {
+            background: rgba(230, 230, 230, 1);
+            border-radius: 6px;
+            padding: 4px 7px;
+            font-size: 12px;
+            color: rgba(100, 100, 100, 1);
+            font-family: Roboto, sans-serif;
           }
 
           /* Responsive design */

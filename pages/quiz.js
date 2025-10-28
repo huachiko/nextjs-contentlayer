@@ -1,11 +1,121 @@
-
-// ==========================================
-// FILE: pages/quiz.js (COMPLETE UPDATED VERSION)
-// ==========================================
-
 import React, { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
+
+// Video Component based on score
+function ScoreVideo({ score }) {
+  const getVideoUrl = () => {
+    if (score >= 90) return '/videos/excellent.mp4'; // 90-100%
+    if (score >= 75) return '/videos/great.mp4';     // 75-89%
+    if (score >= 60) return '/videos/good.mp4';      // 60-74%
+    if (score >= 40) return '/videos/okay.mp4';      // 40-59%
+    return '/videos/keep-trying.mp4';                 // 0-39%
+  };
+
+  return (
+    <video 
+      autoPlay 
+      loop 
+      muted 
+      playsInline
+      style={{ 
+        width: '250px', 
+        height: '250px', 
+        objectFit: 'contain',
+        borderRadius: '20px'
+      }}
+    >
+      <source src={getVideoUrl()} type="video/mp4" />
+      Your browser does not support the video tag.
+    </video>
+  );
+}
+
+// Results Modal Component
+function ResultsModal({ score, totalQuestions, correctAnswers, topic, onClose, onTryAgain }) {
+  const handleClose = () => {
+    // Clear saved session data when modal closes
+    if (topic) {
+      sessionStorage.removeItem(`quiz_${topic}`)
+    }
+    // Navigate back
+    onClose()
+  }
+  
+  const handleTryAgain = () => {
+    // Clear session storage
+    if (topic) {
+      sessionStorage.removeItem(`quiz_${topic}`)
+    }
+    // Call the try again handler
+    onTryAgain()
+  }
+  
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+      background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center',
+      justifyContent: 'center', zIndex: 1000, padding: '20px'
+    }}>
+      <div style={{
+        background: 'white', borderRadius: '40px', padding: '60px 40px',
+        maxWidth: '600px', width: '100%', textAlign: 'center',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+      }}>
+        <h1 style={{
+          fontSize: '48px', fontWeight: 900, marginBottom: '20px',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          letterSpacing: '2px', fontFamily: 'Inter, sans-serif'
+        }}>
+          {score >= 60 ? 'CONGRATULATIONS' : 'KEEP PRACTICING'}
+        </h1>
+
+        <ScoreVideo score={score} />
+
+        <div style={{
+          fontSize: '72px', fontWeight: 900, margin: '20px 0',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          fontFamily: 'Inter, sans-serif'
+        }}>
+          {score}%
+        </div>
+
+        <div style={{ margin: '30px 0' }}>
+          <div style={{ fontSize: '14px', color: '#666', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px' }}>
+            Correct Answers
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 700, color: '#333' }}>
+            {correctAnswers} / {totalQuestions}
+          </div>
+        </div>
+
+        <p style={{ fontSize: '18px', color: '#666', margin: '30px 0', lineHeight: '1.6', fontFamily: 'Inter, sans-serif' }}>
+          {score >= 60 ? "Great job! You've mastered this topic!" : "Don't give up! Keep practicing to improve your score."}
+        </p>
+
+        <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginTop: '40px' }}>
+          <button onClick={handleClose} style={{
+            padding: '16px 32px', fontSize: '16px', fontWeight: 600, borderRadius: '50px',
+            cursor: 'pointer', border: 'none', fontFamily: 'Inter, sans-serif',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white',
+            transition: 'all 0.3s'
+          }}>
+            Return Home
+          </button>
+          <button onClick={handleTryAgain} style={{
+            padding: '16px 32px', fontSize: '16px', fontWeight: 600, borderRadius: '50px',
+            cursor: 'pointer', border: 'none', fontFamily: 'Inter, sans-serif',
+            background: '#f5f5f5', color: '#333', transition: 'all 0.3s'
+          }}>
+            Try Again
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const QuizPage = () => {
   const router = useRouter()
@@ -17,6 +127,7 @@ const QuizPage = () => {
   const [selectedAnswer, setSelectedAnswer] = useState(null)
   const [sidebarExpanded, setSidebarExpanded] = useState(true)
   const [questionStatuses, setQuestionStatuses] = useState({})
+  const [showResults, setShowResults] = useState(false)
   const [maxQuestion, setMaxQuestion] = useState(10)
   
   const [sessionId, setSessionId] = useState(null)
@@ -56,10 +167,6 @@ const QuizPage = () => {
       sessionStorage.setItem(`quiz_${topic}`, JSON.stringify(dataToSave))
     }
   }, [questions, questionStatuses, maxQuestion, topic])
-
-  const toggleSidebar = () => {
-    setSidebarExpanded(!sidebarExpanded)
-  }
 
   const generateQuestion = async (questionNumber) => {
     // Check if question already exists
@@ -135,6 +242,10 @@ const QuizPage = () => {
     }
   }, [questions, currentQuestion])
 
+  const toggleSidebar = () => {
+    setSidebarExpanded(!sidebarExpanded)
+  }
+
   const handleShowSolution = () => {
     setShowSolution(!showSolution)
     if (!showAnswer) {
@@ -162,16 +273,25 @@ const QuizPage = () => {
     setSelectedAnswer('incorrect')
   }
 
+  const calculateResults = () => {
+    const answeredQuestions = Object.keys(questionStatuses).length
+    const correctAnswers = Object.values(questionStatuses).filter(s => s === 'correct').length
+    const score = answeredQuestions > 0 ? Math.round((correctAnswers / answeredQuestions) * 100) : 0
+    return { score, totalQuestions: answeredQuestions, correctAnswers }
+  }
+
   const handleEndSession = () => {
+    const results = calculateResults()
+    if (results.totalQuestions === 0) {
+      alert('Please answer at least one question before ending the session.')
+      return
+    }
     if (confirm('Are you sure you want to end this session? All questions will be cleared.')) {
-      // Clear saved session data
-      sessionStorage.removeItem(`quiz_${topic}`)
-      // Reset state
-      setQuestions({})
-      setQuestionStatuses({})
-      setMaxQuestion(10)
-      setCurrentQuestion(1)
-      router.push('/topicspage')
+      // Clear sessionStorage immediately
+      if (topic) {
+        sessionStorage.removeItem(`quiz_${topic}`)
+      }
+      setShowResults(true)
     }
   }
 
@@ -197,10 +317,17 @@ const QuizPage = () => {
 
   const handlePrevious = () => {
     if (currentQuestion > 1) {
-      setCurrentQuestion(currentQuestion - 1)
+      const prevQuestion = currentQuestion - 1
+      setCurrentQuestion(prevQuestion)
       setShowSolution(false)
       setShowAnswer(false)
-      setSelectedAnswer(null)
+      // Set selectedAnswer based on the previous question's status
+      const status = questionStatuses[prevQuestion]
+      if (status === 'correct' || status === 'incorrect') {
+        setSelectedAnswer(status)
+      } else {
+        setSelectedAnswer(null)
+      }
     }
   }
 
@@ -208,7 +335,13 @@ const QuizPage = () => {
     setCurrentQuestion(questionId)
     setShowSolution(false)
     setShowAnswer(false)
-    setSelectedAnswer(null)
+    // Set selectedAnswer based on the question's status
+    const status = questionStatuses[questionId]
+    if (status === 'correct' || status === 'incorrect') {
+      setSelectedAnswer(status)
+    } else {
+      setSelectedAnswer(null)
+    }
   }
 
   const questionNumbers = Array.from({ length: maxQuestion }, (_, i) => i + 1)
@@ -232,17 +365,29 @@ const QuizPage = () => {
                 <img src="/icons/HomeIcon2.png" />
                 {sidebarExpanded && <span className="nav-text">Home</span>}
               </div>
-              <div className="nav-item">
+              <div className="nav-item" onClick={() => router.push('/profile')}>
                 <img src="/icons/ProfileIcon2.png" />
                 {sidebarExpanded && <span className="nav-text">Profile</span>}
               </div>
-              <div className="nav-item active">
-                <img src="/icons/ContentIcon1.png" />
-                {sidebarExpanded && <span className="nav-text">Content</span>}
+              <div className="nav-item-parent active">
+                <div className="nav-item-main">
+                  <img src="/icons/ContentIcon1.png" alt="Content" />
+                  {sidebarExpanded && <span className="nav-text">Content</span>}
+                </div>
+                {sidebarExpanded && (
+                  <div className="nav-subitems">
+                    <div className="nav-subitem active-sub" onClick={() => router.push('/topicspage')}>
+                      Topics
+                    </div>
+                    <div className="nav-subitem" onClick={() => router.push('/pyp')}>
+                      PYP
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="nav-item">
+              <div className="nav-item"onClick={() => router.push('/activitystatspage')}>
                 <img src="/icons/ActivityIcon2.png"  />
-                {sidebarExpanded && <span className="nav-text">Activity Stats</span>}
+                {sidebarExpanded && <span className="nav-text">Activity <p/> Stats</span>}
               </div>
             </nav>
           </div>
@@ -401,6 +546,36 @@ const QuizPage = () => {
             })}
           </div>
         </div>
+        {/* Results Modal */}
+        {showResults && (
+        <ResultsModal
+          score={calculateResults().score}
+          totalQuestions={calculateResults().totalQuestions}
+          correctAnswers={calculateResults().correctAnswers}
+          topic={topic}
+          onClose={() => {
+            // Reset state after modal closes
+            setQuestions({})
+            setQuestionStatuses({})
+            setMaxQuestion(10)
+            setCurrentQuestion(1)
+            setShowResults(false)
+            router.push('/topicspage')
+          }}
+          onTryAgain={() => {
+            // Reset all state for a fresh start
+            setQuestions({})
+            setQuestionStatuses({})
+            setMaxQuestion(10)
+            setCurrentQuestion(1)
+            setShowSolution(false)
+            setShowAnswer(false)
+            setSelectedAnswer(null)
+            setShowResults(false)
+            setError(null)
+          }}
+        />
+      )}
       </div>
 
       <style jsx>{`
@@ -583,6 +758,84 @@ const QuizPage = () => {
           color: rgba(74, 68, 89, 1);
         }
 
+        .nav-icon {
+          font-size: 20px;
+          flex-shrink: 0;
+        }
+
+        .nav-item,
+        .nav-item-parent {
+          display: flex;
+          flex-direction: column;
+          border-radius: 100px;
+          cursor: pointer;
+          transition: background-color 0.2s;
+          color: rgba(255, 255, 255, 0.9);
+          font-size: 14px;
+          font-family: Roboto, sans-serif;
+          font-weight: 500;
+          white-space: nowrap;
+        }
+
+        .nav-item {
+          align-items: center;
+          gap: 12px;
+          padding: 16px;
+          flex-direction: row;
+        }
+
+        .nav-item-parent {
+          border-radius: 20px;
+          padding: 0;
+        }
+
+        .nav-item-parent.active {
+          background-color: rgba(232, 222, 248, 1);
+          color: rgba(74, 68, 89, 1);
+        }
+
+        .nav-item-main {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 16px;
+        }
+
+        .nav-item:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item-parent:not(.active) .nav-item-main:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+          border-radius: 20px;
+        }
+
+        .nav-subitems {
+          display: flex;
+          flex-direction: column;
+          padding: 0 16px 12px 16px;
+          gap: 4px;
+        }
+
+        .nav-subitem {
+          padding: 10px 16px;
+          font-size: 13px;
+          border-radius: 12px;
+          cursor: pointer;
+          transition: background-color 0.2s;
+          color: rgba(74, 68, 89, 0.8);
+        }
+
+        .nav-subitem:hover {
+          background-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .nav-subitem.active-sub {
+          background-color: rgba(103, 80, 164, 0.2);
+          color: rgba(74, 68, 89, 1);
+          font-weight: 600;
+        }
+
         .nav-item img {
           width: 24px;
           height: 24px;
@@ -696,6 +949,11 @@ const QuizPage = () => {
           margin-bottom: 8px;
           color: #333;
         }
+        
+         .solution-detail {
+          color: #666;
+          font-style: italic;
+        }
 
         .action-buttons {
           display: flex;
@@ -719,6 +977,10 @@ const QuizPage = () => {
         .btn-outline:hover {
           background: #f5f5f5;
           transform: translateY(-2px);
+        }
+
+        .btn-outline:active {
+          transform: translateY(0);
         }
         
         .btn-primary {
@@ -793,6 +1055,48 @@ const QuizPage = () => {
           transform: scale(1.1);
         }
 
+        .feedback-btn:hover:not(:disabled):not(.selected) {
+          transform: scale(1.05);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .feedback-btn.correct:hover:not(:disabled):not(.selected) {
+          background: rgba(76, 175, 80, 0.05);
+          border-color: rgba(76, 175, 80, 0.3);
+        }
+
+        .feedback-btn.incorrect:hover:not(:disabled):not(.selected) {
+          background: rgba(244, 67, 54, 0.05);
+          border-color: rgba(244, 67, 54, 0.3);
+        }
+
+        .feedback-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .feedback-btn:active:not(:disabled) {
+          transform: scale(1.05);
+        }
+
+        .feedback-icon-img {
+          width: 32px;
+          height: 32px;
+          object-fit: contain;
+          transition: all 0.3s;
+        }
+
+        .feedback-btn.selected .feedback-icon-img {
+          filter: brightness(1.2);
+        }
+
+        .feedback-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        
         .nav-buttons {
           display: flex;
           justify-content: space-between;
@@ -816,6 +1120,10 @@ const QuizPage = () => {
           background: rgba(0, 0, 0, 0.05);
         }
 
+        .btn-back:disabled {
+          cursor: not-allowed;
+        }
+
         .btn-text {
           background: none;
           border: none;
@@ -824,6 +1132,10 @@ const QuizPage = () => {
           cursor: pointer;
           color: #333;
           font-family: 'Inter', sans-serif;
+        }
+
+        .btn-text:hover {
+          color: #000;
         }
 
         .btn-next {
