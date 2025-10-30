@@ -15,6 +15,7 @@ const HomePage = () => {
     useEffect(() => {
   // Try to load user info from localStorage
   const storedUser = localStorage.getItem('user');
+
   if (storedUser) {
     try {
       const user = JSON.parse(storedUser);
@@ -26,16 +27,49 @@ const HomePage = () => {
   }
 }, []);
 
-
+    
   const toggleSidebar = () => {
     setSidebarExpanded(!sidebarExpanded)
   }
 
-   const handleNameSubmit = (e) => {
-    if (e.key === 'Enter' || e.type === 'blur') {
-      setIsEditingName(false)
-    }
+   const handleNameSubmit = async () => {
+  setIsEditingName(false);
+
+  const raw = typeof window !== "undefined" ? localStorage.getItem("user") : null;
+  if (!raw) return;
+  const user = JSON.parse(raw);
+  const userId = user?.id;
+
+  if (!userId) {
+    alert("User ID missing. Please sign in again.");
+    return;
   }
+
+  try {
+    const res = await fetch("/api/update-displayname", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, displayName: userName }),
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to update name");
+    }
+
+    const updated = await res.json();
+    console.log("Display name updated:", updated);
+    alert("Display name updated!");
+
+    // Update localStorage copy of user too:
+    const newUser = { ...user, displayName: userName };
+    localStorage.setItem("user", JSON.stringify(newUser));
+
+  } catch (e) {
+    console.error(e);
+    alert("Failed to update display name. Try again.");
+  }
+};
+
 
   const handleStatusSubmit = (e) => {
     if (e.key === 'Enter' || e.type === 'blur') {
@@ -175,33 +209,38 @@ const HomePage = () => {
                     </span>
                   )}
                 </div>
-                <div className="topicspage-name-section">
-                  {isEditingName ? (
-                    <input
-                      type="text"
-                      value={userName}
-                      onChange={(e) => setUserName(e.target.value)}
-                      onBlur={handleNameSubmit}
-                      onKeyPress={handleNameSubmit}
-                      className="topicspage-name-input"
-                      autoFocus
-                      maxLength={30}
-                    />
-                  ) : (
-                    <span 
-                      className="topicspage-text12"
-                      onClick={() => setIsEditingName(true)}
-                    >
-                      {userName}
-                    </span>
-                  )}
-                  <img 
-                    src="/edit.png" 
-                    alt="Edit" 
-                    className="topicspage-edit"
-                    onClick={() => setIsEditingName(true)}
-                  />
-                </div>
+               <div className="topicspage-name-section">
+  {isEditingName ? (
+    <input
+      type="text"
+      value={userName}
+      onChange={(e) => setUserName(e.target.value)}
+      onKeyDown={async (e) => {
+        if (e.key === "Enter") {
+          await handleNameSubmit();
+        }
+      }}
+      onBlur={handleNameSubmit}
+      className="topicspage-name-input"
+      autoFocus
+      maxLength={30}
+    />
+  ) : (
+    <span 
+      className="topicspage-text12"
+      onClick={() => setIsEditingName(true)}
+    >
+      {userName}
+    </span>
+  )}
+  <img 
+    src="/edit.png" 
+    alt="Edit" 
+    className="topicspage-edit"
+    onClick={() => setIsEditingName(true)}
+  />
+</div>
+
               </div>
               
               <div className="topicspage-group11">

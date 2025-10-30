@@ -1,42 +1,87 @@
-import React, { useState } from 'react'
-import Head from 'next/head'
-import { useRouter } from 'next/router'
-import Link from 'next/link';
+import React, { useState, useEffect } from 'react';
+import Head from 'next/head';
+import { useRouter } from 'next/router';
 
 const Topicspage = () => {
-  const router = useRouter()
-  const [sidebarExpanded, setSidebarExpanded] = useState(true)
-  const [userName, setUserName] = useState('Ally lee')
-  const [statusMessage, setStatusMessage] = useState('Im cooked')
-  const [isEditingName, setIsEditingName] = useState(false)
-  const [isEditingStatus, setIsEditingStatus] = useState(false)
+  const router = useRouter();
+
+  const [sidebarExpanded, setSidebarExpanded] = useState(true);
+
+  // replace hard-coded defaults; will hydrate from localStorage on mount
+  const [userName, setUserName] = useState('');
+  const [statusMessage, setStatusMessage] = useState('Im cooked');
+
+  // keep userId so the page “remembers” it; we’ll also pass it to /quiz
+  const [userId, setUserId] = useState(null);
+
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isEditingStatus, setIsEditingStatus] = useState(false);
+
+  // ⬇️ hydrate from localStorage and guard route
+  useEffect(() => {
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+      if (!raw) {
+        router.replace('/'); // no session -> back to sign-in
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      const id =
+        parsed?.id ?? parsed?.user?.id ?? parsed?.userId ?? parsed?.data?.user?.id;
+
+      if (!id) {
+        router.replace('/'); // malformed session -> back to sign-in
+        return;
+      }
+
+      setUserId(Number(id));
+      // prefer displayName; fallback to username/email
+      const name =
+        parsed?.displayName ||
+        parsed?.user?.displayName ||
+        parsed?.username ||
+        parsed?.user?.username ||
+        parsed?.email ||
+        'Friend';
+      setUserName(name);
+    } catch (e) {
+      console.error('Failed to read user from localStorage:', e);
+      router.replace('/');
+    }
+  }, [router]);
 
   const handleTopicClick = (topicName, topicTitle) => {
-    // Navigate to quiz page with topic information
+    // include uid for convenience; quiz still reads localStorage itself
     router.push({
       pathname: '/quiz',
-      query: { 
+      query: {
         topic: topicName,
-        title: topicTitle
+        title: topicTitle,
+        uid: userId || ''
       }
-    })
-  }
+    });
+  };
 
-  const toggleSidebar = () => {
-    setSidebarExpanded(!sidebarExpanded)
-  }
+  const toggleSidebar = () => setSidebarExpanded(!sidebarExpanded);
 
   const handleNameSubmit = (e) => {
     if (e.key === 'Enter' || e.type === 'blur') {
-      setIsEditingName(false)
+      setIsEditingName(false);
+      // (optional) persist edited name locally so it sticks on refresh:
+      try {
+        const raw = localStorage.getItem('user');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const updated = { ...parsed, displayName: userName };
+          localStorage.setItem('user', JSON.stringify(updated));
+        }
+      } catch {}
     }
-  }
+  };
 
   const handleStatusSubmit = (e) => {
-    if (e.key === 'Enter' || e.type === 'blur') {
-      setIsEditingStatus(false)
-    }
-  }
+    if (e.key === 'Enter' || e.type === 'blur') setIsEditingStatus(false);
+  };
 
   return (
     <>
@@ -54,7 +99,7 @@ const Topicspage = () => {
               </button>
             </div>
             <div className="topicspage-segments">
-              <div className="topicspage-navitem01" onClick={() => router.push('/')}>
+              <div className="topicspage-navitem01" onClick={() => router.push('/home')}>
                 <img src="/icons/HomeIcon2.png" alt="Home" className="topicspage-icon" />
                 {sidebarExpanded && <span className="topicspage-text">Home</span>}
               </div>

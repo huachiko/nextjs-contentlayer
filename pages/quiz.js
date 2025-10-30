@@ -225,12 +225,12 @@ const QuizPage = () => {
   };
 
   // Load current question if it doesn't exist
-  useEffect(() => {
-    if (topic && !questions[currentQuestion]) {
-      console.log(`Current question ${currentQuestion} doesn't exist, generating...`)
-      generateQuestion(currentQuestion);
-    }
-  }, [currentQuestion, topic]);
+useEffect(() => {
+  if (topic && !questions[currentQuestion] && !loading) {
+    console.log(`Current question ${currentQuestion} doesn't exist, generating...`)
+    generateQuestion(currentQuestion);
+  }
+}, [currentQuestion, topic, questions, loading]); 
 
   // Pre-generate next question (Option 3)
   useEffect(() => {
@@ -599,7 +599,7 @@ const toggleSidebar = () => {
     correctAnswers={calculateResults().correctAnswers}
     topic={topic}
     onClose={async () => {
-      // attempt saving if previous attempt didn't run:
+      
       
       // Reset state after modal closes
       setQuestions({});
@@ -610,25 +610,30 @@ const toggleSidebar = () => {
       router.push('/topicspage');
     }}
     onTryAgain={async () => {
-      // attempt saving if previous attempt didn't run:
-      if (!hasSavedRef.current) {
-        const r = calculateResults();
-        const topicLabel = (title || topic || 'Additional Mathematics');
-        await persistQuizSession(topicLabel, r.correctAnswers, r.totalQuestions);
-        hasSavedRef.current = true;
-      }
+  // (ResultsModal already clears sessionStorage; if not, do it here)
+  // if (topic) sessionStorage.removeItem(`quiz_${topic}`);
 
-      // Reset all state for a fresh start
-      setQuestions({});
-      setQuestionStatuses({});
-      setMaxQuestion(10);
-      setCurrentQuestion(1);
-      setShowSolution(false);
-      setShowAnswer(false);
-      setSelectedAnswer(null);
-      setShowResults(false);
-      setError(null);
-    }}
+  // Reset all state for a fresh start
+  setQuestions({});
+  setQuestionStatuses({});
+  setMaxQuestion(10);
+  setCurrentQuestion(1);
+  setShowSolution(false);
+  setShowAnswer(false);
+  setSelectedAnswer(null);
+  setShowResults(false);
+  setError(null);
+
+  // Kick off a new question for Q1 after state flushes
+  setTimeout(() => {
+    try {
+      generateQuestion(1);
+    } catch (e) {
+      console.error("Failed to re-generate Q1 on Try Again:", e);
+    }
+  }, 0);
+}}
+
   />
 )}
 
