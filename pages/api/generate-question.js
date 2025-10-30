@@ -61,141 +61,164 @@ export default async function handler(req, res) {
 
     if (topicQuestions.length === 0) {
       return res.status(400).json({ 
-        error: `No example questions found for topic: ${mappedTopic}`,
+        error: 'No example questions found for topic: ' + mappedTopic,
         availableTopics: [...new Set(questions.map(q => q.topic))]
       });
     }
 
     // Function to convert LaTeX to plain text
     const latexToPlainText = (text) => {
-      return text
-        // Fractions: \frac{a}{b} -> (a/b)
-        .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1/$2)')
-        // Square roots: \sqrt{x} -> √(x)
-        .replace(/\\sqrt\{([^}]+)\}/g, '√($1)')
-        // Superscripts: x^2 or x^{2} -> x²
-        .replace(/\^(\d)/g, (match, p1) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[p1] || `^${p1}`)
-        .replace(/\^\{([^}]+)\}/g, '^($1)')
-        // Subscripts: x_2 -> x₂
-        .replace(/_(\d)/g, (match, p1) => '₀₁₂₃₄₅₆₇₈₉'[p1] || `_${p1}`)
-        .replace(/_{([^}]+)}/g, '_($1)')
-        // Greek letters
-        .replace(/\\pi/g, 'π')
-        .replace(/\\theta/g, 'θ')
-        .replace(/\\alpha/g, 'α')
-        .replace(/\\beta/g, 'β')
-        .replace(/\\gamma/g, 'γ')
-        .replace(/\\delta/g, 'δ')
-        // Math operators
-        .replace(/\\times/g, '×')
-        .replace(/\\div/g, '÷')
-        .replace(/\\pm/g, '±')
-        .replace(/\\leq/g, '≤')
-        .replace(/\\geq/g, '≥')
-        .replace(/\\neq/g, '≠')
-        .replace(/\\approx/g, '≈')
-        // Trigonometric functions
-        .replace(/\\sin/g, 'sin')
-        .replace(/\\cos/g, 'cos')
-        .replace(/\\tan/g, 'tan')
-        .replace(/\\sec/g, 'sec')
-        .replace(/\\cot/g, 'cot')
-        // Logarithms: \log_a b -> log_a(b)
-        .replace(/\\log_\{?(\w+)\}?\s*\(?([^)]+)\)?/g, 'log_$1($2)')
-        .replace(/\\log/g, 'log')
-        .replace(/\\ln/g, 'ln')
-        // Remove remaining LaTeX commands
-        .replace(/\\text\{([^}]+)\}/g, '$1')
-        .replace(/\\mathrm\{([^}]+)\}/g, '$1')
-        // Clean up extra spaces and newlines
-        .replace(/\s+/g, ' ')
-        .trim();
+      let result = text;
+      
+      // Fractions
+      result = result.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1/$2)');
+      
+      // Square roots
+      result = result.replace(/\\sqrt\{([^}]+)\}/g, 'sqrt($1)');
+      
+      // Superscripts
+      result = result.replace(/\^(\d)/g, function(match, p1) {
+        const superscripts = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+        const superMap = {
+          '0': '\u2070', '1': '\u00B9', '2': '\u00B2', '3': '\u00B3',
+          '4': '\u2074', '5': '\u2075', '6': '\u2076', '7': '\u2077',
+          '8': '\u2078', '9': '\u2079'
+        };
+        return superMap[p1] || '^' + p1;
+      });
+      result = result.replace(/\^\{([^}]+)\}/g, '^($1)');
+      
+      // Subscripts
+      result = result.replace(/_(\d)/g, function(match, p1) {
+        const subMap = {
+          '0': '\u2080', '1': '\u2081', '2': '\u2082', '3': '\u2083',
+          '4': '\u2084', '5': '\u2085', '6': '\u2086', '7': '\u2087',
+          '8': '\u2088', '9': '\u2089'
+        };
+        return subMap[p1] || '_' + p1;
+      });
+      result = result.replace(/_{([^}]+)}/g, '_($1)');
+      
+      // Greek letters
+      result = result.replace(/\\pi/g, 'pi');
+      result = result.replace(/\\theta/g, 'theta');
+      result = result.replace(/\\alpha/g, 'alpha');
+      result = result.replace(/\\beta/g, 'beta');
+      result = result.replace(/\\gamma/g, 'gamma');
+      result = result.replace(/\\delta/g, 'delta');
+      
+      // Math operators
+      result = result.replace(/\\times/g, 'x');
+      result = result.replace(/\\div/g, '/');
+      result = result.replace(/\\pm/g, '+/-');
+      result = result.replace(/\\leq/g, '<=');
+      result = result.replace(/\\geq/g, '>=');
+      result = result.replace(/\\neq/g, '!=');
+      result = result.replace(/\\approx/g, '~=');
+      
+      // Trig functions
+      result = result.replace(/\\sin/g, 'sin');
+      result = result.replace(/\\cos/g, 'cos');
+      result = result.replace(/\\tan/g, 'tan');
+      result = result.replace(/\\sec/g, 'sec');
+      result = result.replace(/\\cot/g, 'cot');
+      
+      // Logarithms
+      result = result.replace(/\\log_\{?(\w+)\}?\s*\(?([^)]+)\)?/g, 'log_$1($2)');
+      result = result.replace(/\\log/g, 'log');
+      result = result.replace(/\\ln/g, 'ln');
+      
+      // Remove remaining LaTeX
+      result = result.replace(/\\text\{([^}]+)\}/g, '$1');
+      result = result.replace(/\\mathrm\{([^}]+)\}/g, '$1');
+      
+      // Clean up spaces
+      result = result.replace(/\s+/g, ' ').trim();
+      
+      return result;
     };
 
-    // Randomly select 3-5 questions as examples (increased from 2-3)
+    // Randomly select 3-5 questions as examples
     const numExamples = Math.min(5, topicQuestions.length);
     const shuffled = [...topicQuestions].sort(() => 0.5 - Math.random());
     const selectedExamples = shuffled.slice(0, numExamples);
 
-    // Format examples for the prompt with LaTeX converted to plain text
+    // Format examples
     const exampleText = selectedExamples
       .map((q, idx) => {
         const plainQuestion = latexToPlainText(q.question);
-        return `Example ${idx + 1}: ${plainQuestion.replace(/\n/g, ' ')}`;
+        return 'Example ' + (idx + 1) + ': ' + plainQuestion.replace(/\n/g, ' ');
       })
       .join('\n\n');
 
-    // Add variety instructions based on number of examples
+    // Variety instructions
     const varietyInstructions = [
       "Use different numerical values and coefficients",
       "Vary the context (real-world applications, pure math, or word problems)",
       "Change the specific sub-topic within this main topic",
-      "Use different letter variables (x, y, t, θ, etc.)",
+      "Use different letter variables (x, y, t, theta, etc.)",
       "Adjust the complexity while maintaining O-Level standard"
     ];
     
-    // Randomly select 2-3 variety instructions
     const selectedInstructions = varietyInstructions
       .sort(() => 0.5 - Math.random())
       .slice(0, 3)
       .join('. ') + '.';
 
-    // Temperature variation for more creativity
-    const temperature = 0.8 + (Math.random() * 0.4); // 0.8 to 1.2 for maximum variety
+    // Temperature variation
+    const temperature = 0.8 + (Math.random() * 0.4);
 
-    // Create a summary of previous questions to avoid repetition
+    // Avoidance instructions
     let avoidanceInstructions = '';
     if (previousQuestions.length > 0) {
       const previousSummaries = previousQuestions
-        .slice(-5) // Last 5 questions
-        .map((q, idx) => `Previous Q${idx + 1}: ${q.substring(0, 100)}...`)
+        .slice(-5)
+        .map((q, idx) => 'Previous Q' + (idx + 1) + ': ' + q.substring(0, 100) + '...')
         .join('\n');
       
-      avoidanceInstructions = `\n\nPREVIOUSLY GENERATED QUESTIONS (DO NOT REPEAT THESE):
-${previousSummaries}
-
-You MUST generate a question that is COMPLETELY DIFFERENT from all previous questions above. Use different:
-- Mathematical approach/technique
-- Context (if one was real-world, make this pure math, or vice versa)
-- Numbers and coefficients
-- Variables and notation
-- Sub-topic focus within ${mappedTopic}`;
+      avoidanceInstructions = '\n\nPREVIOUSLY GENERATED QUESTIONS (DO NOT REPEAT THESE):\n' +
+        previousSummaries + '\n\n' +
+        'You MUST generate a question that is COMPLETELY DIFFERENT from all previous questions above. Use different:\n' +
+        '- Mathematical approach/technique\n' +
+        '- Context (if one was real-world, make this pure math, or vice versa)\n' +
+        '- Numbers and coefficients\n' +
+        '- Variables and notation\n' +
+        '- Sub-topic focus within ' + mappedTopic;
     }
+
+    const systemMessage = 'You are creating Singapore O-Level Additional Mathematics questions. Study these real O-Level examples from past papers:\n\n' +
+      exampleText + '\n\n' +
+      'Generate a NEW, COMPLETELY UNIQUE question following O-Level standards.\n\n' +
+      'CRITICAL - Each question MUST be completely different:\n' +
+      selectedInstructions + '\n\n' +
+      'Use plain mathematical notation (no LaTeX):\n' +
+      '- Use simple text like x^2 for x squared\n' +
+      '- Use sqrt() for square root\n' +
+      '- Use proper fractions like (a/b)\n' +
+      '- Use symbols: pi, theta, <=, >=, !=, +/-, x\n' +
+      '- Keep it exam-quality and readable\n' +
+      avoidanceInstructions + '\n\n' +
+      'Return only JSON:\n' +
+      '{"question":"text","parts":[{"label":"(a)","text":"part a"}],"solution":{"steps":[{"step":1,"description":"desc","work":"work"}],"answers":[{"part":"(a)","answer":"ans"}]}}';
+
+    const userMessage = 'Generate a COMPLETELY UNIQUE ' + mappedTopic + ' question that is TOTALLY DIFFERENT from ALL examples and previous questions. Be highly creative and original.';
 
     const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+        'Authorization': 'Bearer ' + process.env.DEEPSEEK_API_KEY,
       },
       body: JSON.stringify({
         model: 'deepseek-chat',
         messages: [
           {
             role: 'system',
-            content: `You are creating Singapore O-Level Additional Mathematics questions. Study these real O-Level examples from past papers:
-
-${exampleText}
-
-Generate a NEW, COMPLETELY UNIQUE question following O-Level standards. 
-
-CRITICAL - Each question MUST be completely different:
-${selectedInstructions}
-
-Use plain mathematical notation (no LaTeX):
-- Use Unicode superscripts: x² x³ (not x^2)
-- Use √ for square root (not \\sqrt)
-- Use proper fractions like (a/b) or Unicode ½ ¾
-- Use symbols: π θ ≤ ≥ ≠ ± ×
-- Keep it exam-quality and readable
-${avoidanceInstructions}
-
-Return only JSON:
-{"question":"text","parts":[{"label":"(a)","text":"part a"}],"solution":{"steps":[{"step":1,"description":"desc","work":"work"}],"answers":[{"part":"(a)","answer":"ans"}]}}`
+            content: systemMessage
           },
           {
             role: 'user',
-            content: `Generate a COMPLETELY UNIQUE ${mappedTopic} question that is TOTALLY DIFFERENT from ALL examples and previous questions. Be highly creative and original.`
+            content: userMessage
           }
         ],
         temperature: temperature,

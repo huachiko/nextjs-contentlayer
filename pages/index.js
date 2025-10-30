@@ -1,11 +1,36 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import Link from 'next/link';
 
 const HomePage = () => {
   const router = useRouter()
   const [sidebarExpanded, setSidebarExpanded] = useState(true)
+  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState(null)
+
+  // Check authentication on mount
+  useEffect(() => {
+    checkAuth()
+  }, [])
+
+  const checkAuth = async () => {
+    try {
+      const response = await fetch('/api/auth/me')
+      const data = await response.json()
+      
+      if (!data.isLoggedIn) {
+        router.push('/login')
+        return
+      }
+      
+      setUser(data.user)
+    } catch (error) {
+      console.error('Auth check error:', error)
+      router.push('/login')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const toggleSidebar = () => {
     setSidebarExpanded(!sidebarExpanded)
@@ -18,8 +43,32 @@ const HomePage = () => {
   }
 
   const handlePastYearPaperClick = () => {
-    // Add navigation for past year paper if needed
     console.log('Past Year Paper clicked')
+  }
+
+  const handleLogout = async () => {
+    if (confirm('Are you sure you want to logout?')) {
+      try {
+        await fetch('/api/auth/logout', { method: 'POST' })
+        router.push('/login')
+      } catch (error) {
+        console.error('Logout error:', error)
+      }
+    }
+  }
+
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '100vh',
+        backgroundColor: 'rgba(188, 203, 184, 1)'
+      }}>
+        <div style={{ fontSize: '24px', color: '#4a6741' }}>Loading...</div>
+      </div>
+    )
   }
 
   return (
@@ -36,27 +85,27 @@ const HomePage = () => {
               <div className="menu-icon">{sidebarExpanded ? '✕' : '☰'}</div>
             </button>
             <nav className="nav-items">
-        
               <div className="nav-item active">
                 <img src="/icons/HomeIcon2.png" alt="Home" />
                 {sidebarExpanded && <span className="nav-text">Home</span>}
               </div>
-      
-              <Link href="/profile">
-              <div className="nav-item">
+              <div className="nav-item" onClick={() => router.push('/profile')}>
                 <img src="/icons/ProfileIcon2.png" alt="Profile" />
                 {sidebarExpanded && <span className="nav-text">Profile</span>}
               </div>
-              </Link>
-              <Link href="/topicspage">
-              <div className="nav-item">
+              <div className="nav-item" onClick={handleTopicalQuizClick}>
                 <img src="/icons/ContentIcon1.png" alt="Content" />
                 {sidebarExpanded && <span className="nav-text">Content</span>}
               </div>
-              </Link>
               <div className="nav-item">
                 <img src="/icons/ActivityIcon2.png" alt="Activity" />
                 {sidebarExpanded && <span className="nav-text">Activity Stats</span>}
+              </div>
+              <div className="nav-item logout" onClick={handleLogout}>
+                <svg style={{ width: '24px', height: '24px', fill: 'none', stroke: 'currentColor' }} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                {sidebarExpanded && <span className="nav-text">Logout</span>}
               </div>
             </nav>
           </div>
@@ -65,7 +114,7 @@ const HomePage = () => {
           <div className={`main-content ${sidebarExpanded ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
             <div className="content-wrapper">
               {/* Welcome Header */}
-              <h1 className="welcome-title">Hi, welcome back Ally</h1>
+              <h1 className="welcome-title">Hi, welcome back {user?.displayName || 'User'}</h1>
 
               {/* Recent Quiz Section */}
               <div className="recent-quiz-section">
@@ -120,8 +169,8 @@ const HomePage = () => {
                   <img src="/3d-avatar-12.png" alt="Avatar" className="profile-avatar" />
                 </div>
                 <div className="profile-name">
-                  <span>Ally lee</span>
-                  <img src="/edit.png" alt="Edit" className="edit-icon" />
+                  <span>{user?.displayName || 'User'}</span>
+                  <img src="/edit.png" alt="Edit" className="edit-icon" onClick={() => router.push('/profile')} />
                 </div>
               </div>
 
@@ -244,6 +293,15 @@ const HomePage = () => {
           color: rgba(74, 68, 89, 1);
         }
 
+        .nav-item.logout {
+          margin-top: 20px;
+          background-color: rgba(255, 100, 100, 0.2);
+        }
+
+        .nav-item.logout:hover {
+          background-color: rgba(255, 100, 100, 0.3);
+        }
+
         .nav-item img {
           width: 24px;
           height: 24px;
@@ -301,53 +359,52 @@ const HomePage = () => {
         }
 
         .recent-quiz-badge {
-          background-color: rgba(188, 203, 184, 1);
-          color: rgba(74, 68, 89, 1);
-          font-size: 16px;
-          font-weight: 500;
-          font-family: 'Inter', sans-serif;
-          padding: 12px 28px;
-          border-radius: 50px;
           display: inline-block;
-          margin-bottom: 20px;
+          background: rgba(255, 182, 193, 1);
+          padding: 8px 20px;
+          border-radius: 100px;
+          font-size: 14px;
+          font-weight: 600;
+          font-family: 'Inter', sans-serif;
+          color: rgba(28, 42, 58, 1);
+          margin-bottom: 16px;
         }
 
         .recent-quiz-card {
           background: white;
-          border-radius: 40px;
+          border-radius: 36px;
           padding: 50px 60px;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
           display: flex;
           justify-content: space-between;
           align-items: center;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-          position: relative;
-          overflow: hidden;
+          gap: 40px;
         }
 
         .quiz-info {
           flex: 1;
-          z-index: 2;
         }
 
         .quiz-title {
-          font-size: 42px;
-          font-weight: 600;
-          font-family: 'Inter', sans-serif;
+          font-size: 48px;
+          font-weight: 700;
+          font-family: 'Magra', sans-serif;
           color: rgba(28, 42, 58, 1);
           margin-bottom: 12px;
+          line-height: 1.2;
         }
 
         .quiz-subtitle {
           font-size: 18px;
           font-weight: 400;
           font-family: 'Inter', sans-serif;
-          color: rgba(100, 100, 100, 1);
-          margin: 0;
+          color: rgba(28, 42, 58, 0.7);
         }
 
         .calculator-illustration {
-          width: 280px;
-          height: 280px;
+          width: 260px;
+          height: 260px;
+          flex-shrink: 0;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -374,10 +431,10 @@ const HomePage = () => {
           flex-direction: column;
           align-items: center;
           gap: 24px;
-          cursor: pointer;
           border: none;
+          cursor: pointer;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-          transition: all 0.3s;
+          transition: all 0.3s ease;
         }
 
         .quiz-option-card:hover {

@@ -2,5 +2,7 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/": "pages/index.js"
+  "/api/generate-question": "pages/api/generate-question.js",
+  "/api/auth/me": "pages/api/auth/me.js",
+  "/quiz": "pages/quiz.js"
 }
