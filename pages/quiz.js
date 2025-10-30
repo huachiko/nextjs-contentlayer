@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect} from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 
-// Video Component based on score
+
 function ScoreVideo({ score }) {
   const getVideoUrl = () => {
     if (score >= 90) return '/videos/excellent.mp4'; // 90-100%
@@ -240,11 +240,47 @@ const QuizPage = () => {
         generateQuestion(currentQuestion + 1)
       }, 500)
     }
-  }, [questions, currentQuestion])
+  }, [questions, currentQuestion]);
 
-  const toggleSidebar = () => {
-    setSidebarExpanded(!sidebarExpanded)
+ // --- helper: persist a finished quiz session to the DB ---
+ // Option A: function declaration
+async function persistQuizSession(topicLabel, correctAnswers, totalQuestions) {
+  try {
+    const raw = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+    if (!raw) { alert("Please sign in first to save your progress."); return; }
+
+    const user = JSON.parse(raw);
+    const userId = Number(user?.id);
+    if (!userId) { alert("User ID missing. Please sign in again."); return; }
+
+    const payload = {
+      userId,
+      topic: String(topicLabel || ''),
+      correct: Number(correctAnswers || 0),
+      total: Number(totalQuestions || 0),
+    };
+
+    const res = await fetch('/api/save-quiz', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const text = await res.text();
+    console.log('POST /api/save-quiz ->', res.status, text);
+
+    if (!res.ok) {
+      alert(`Failed to save quiz (${res.status}). See console for details.`);
+    }
+  } catch (e) {
+    console.error('Failed to save quiz session:', e);
+    alert('Failed to save quiz: check console for details.');
   }
+}
+
+const toggleSidebar = () => {
+  setSidebarExpanded(!sidebarExpanded)
+};
 
   const handleShowSolution = () => {
     setShowSolution(!showSolution)
@@ -274,26 +310,36 @@ const QuizPage = () => {
   }
 
   const calculateResults = () => {
-    const answeredQuestions = Object.keys(questionStatuses).length
-    const correctAnswers = Object.values(questionStatuses).filter(s => s === 'correct').length
-    const score = answeredQuestions > 0 ? Math.round((correctAnswers / answeredQuestions) * 100) : 0
-    return { score, totalQuestions: answeredQuestions, correctAnswers }
-  }
+  const statuses = Object.values(questionStatuses || {});
+  const answered = statuses.filter(s => s === 'correct' || s === 'incorrect');
+  const correct = statuses.filter(s => s === 'correct');
+  const totalQuestions = answered.length;
+  const correctAnswers = correct.length;
+  const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+  return { score, totalQuestions, correctAnswers };
+};
 
-  const handleEndSession = () => {
-    const results = calculateResults()
-    if (results.totalQuestions === 0) {
-      alert('Please answer at least one question before ending the session.')
-      return
-    }
-    if (confirm('Are you sure you want to end this session? All questions will be cleared.')) {
-      // Clear sessionStorage immediately
-      if (topic) {
-        sessionStorage.removeItem(`quiz_${topic}`)
-      }
-      setShowResults(true)
-    }
+
+ const handleEndSession = async () => {
+  const results = calculateResults();
+  if (results.totalQuestions === 0) {
+    alert('Please answer at least one question before ending the session.');
+    return;
   }
+  if (confirm('Are you sure you want to end this session? All questions will be cleared.')) {
+    const topicLabel = (title || topic || 'Additional Mathematics');
+
+    await persistQuizSession(topicLabel, results.correctAnswers, results.totalQuestions);
+
+
+    if (topic) {
+      sessionStorage.removeItem(`quiz_${topic}`);
+    }
+    setShowResults(true);
+  }
+};
+
+
 
   const handleNext = () => {
     const nextQuestion = currentQuestion + 1
@@ -506,9 +552,8 @@ const QuizPage = () => {
                     >
                       ← 
                     </button>
-                    <button className="btn-text" onClick={handleEndSession}>
-                      End session
-                    </button>
+                    <button className="btn-text" onClick={handleEndSession}>End session</button>
+
                     <button 
                       className="btn-next" 
                       onClick={handleNext}
@@ -548,34 +593,45 @@ const QuizPage = () => {
         </div>
         {/* Results Modal */}
         {showResults && (
-        <ResultsModal
-          score={calculateResults().score}
-          totalQuestions={calculateResults().totalQuestions}
-          correctAnswers={calculateResults().correctAnswers}
-          topic={topic}
-          onClose={() => {
-            // Reset state after modal closes
-            setQuestions({})
-            setQuestionStatuses({})
-            setMaxQuestion(10)
-            setCurrentQuestion(1)
-            setShowResults(false)
-            router.push('/topicspage')
-          }}
-          onTryAgain={() => {
-            // Reset all state for a fresh start
-            setQuestions({})
-            setQuestionStatuses({})
-            setMaxQuestion(10)
-            setCurrentQuestion(1)
-            setShowSolution(false)
-            setShowAnswer(false)
-            setSelectedAnswer(null)
-            setShowResults(false)
-            setError(null)
-          }}
-        />
-      )}
+  <ResultsModal
+    score={calculateResults().score}
+    totalQuestions={calculateResults().totalQuestions}
+    correctAnswers={calculateResults().correctAnswers}
+    topic={topic}
+    onClose={async () => {
+      // attempt saving if previous attempt didn't run:
+      
+      // Reset state after modal closes
+      setQuestions({});
+      setQuestionStatuses({});
+      setMaxQuestion(10);
+      setCurrentQuestion(1);
+      setShowResults(false);
+      router.push('/topicspage');
+    }}
+    onTryAgain={async () => {
+      // attempt saving if previous attempt didn't run:
+      if (!hasSavedRef.current) {
+        const r = calculateResults();
+        const topicLabel = (title || topic || 'Additional Mathematics');
+        await persistQuizSession(topicLabel, r.correctAnswers, r.totalQuestions);
+        hasSavedRef.current = true;
+      }
+
+      // Reset all state for a fresh start
+      setQuestions({});
+      setQuestionStatuses({});
+      setMaxQuestion(10);
+      setCurrentQuestion(1);
+      setShowSolution(false);
+      setShowAnswer(false);
+      setSelectedAnswer(null);
+      setShowResults(false);
+      setError(null);
+    }}
+  />
+)}
+
       </div>
 
       <style jsx>{`
