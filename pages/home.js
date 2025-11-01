@@ -1,4 +1,3 @@
-
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import Link from 'next/link';
@@ -12,6 +11,11 @@ const HomePage = () => {
   const [statusMessage, setStatusMessage] = useState('Im cooked')
   const [isEditingName, setIsEditingName] = useState(false)
   const [isEditingStatus, setIsEditingStatus] = useState(false)
+  const handleSignOut = () => {
+    localStorage.removeItem('user');
+    router.push('/');  // Redirect to the login page
+  };
+  
     useEffect(() => {
   // Try to load user info from localStorage
   const storedUser = localStorage.getItem('user');
@@ -95,49 +99,57 @@ const HomePage = () => {
         </Head>
 
         <div className="home-page">
-          {/* Sidebar Navigation */}
-          <div className={`sidebar ${sidebarExpanded ? 'expanded' : 'collapsed'}`}>
-            <button className="menu-button" onClick={toggleSidebar}>
-              <div className="menu-icon">{sidebarExpanded ? '✕' : '☰'}</div>
-            </button>
-            <nav className="nav-items">
-        
-              <div className="nav-item active">
-                <img src="/icons/HomeIcon2.png" alt="Home" />
-                {sidebarExpanded && <span className="nav-text">Home</span>}
-              </div>
-              <div className="nav-item" onClick={() => router.push('/profile')}>
-                <img src="/icons/ProfileIcon2.png" alt="Profile" />
-                {sidebarExpanded && <span className="nav-text">Profile</span>}
-              </div>
-              <div className="nav-item-parent">
-                <div className="nav-item-main">
-                  <img src="/icons/ContentIcon1.png" alt="Content" />
-                  {sidebarExpanded && <span className="nav-text">Content</span>}
-                </div>
-                {sidebarExpanded && (
-                  <div className="nav-subitems">
-                    <div className="nav-subitem" onClick={() => router.push('/topicspage')}>
-                      Topics
-                    </div>
-                    <div className="nav-subitem" onClick={() => router.push('/pyp')}>
-                      PYP
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="nav-item" onClick={() => router.push('/activitystatspage')}>
-                <img src="/icons/ActivityIcon2.png" alt="Activity" />
-                {sidebarExpanded && <span className="nav-text">Activity <p/> Stats</span>}
-              </div>
-            </nav>
+  {/* Sidebar Navigation */}
+  <div className={`sidebar ${sidebarExpanded ? 'expanded' : 'collapsed'}`}>
+    <button className="menu-button" onClick={toggleSidebar}>
+      <div className="menu-icon">{sidebarExpanded ? '✕' : '☰'}</div>
+    </button>
+    <nav className="nav-items">
+      <div className="nav-item active">
+        <img src="/icons/HomeIcon2.png" alt="Home" />
+        {sidebarExpanded && <span className="nav-text">Home</span>}
+      </div>
+      <div className="nav-item" onClick={() => router.push('/profile')}>
+        <img src="/icons/ProfileIcon2.png" alt="Profile" />
+        {sidebarExpanded && <span className="nav-text">Profile</span>}
+      </div>
+      <div className="nav-item-parent">
+        <div className="nav-item-main">
+          <img src="/icons/ContentIcon1.png" alt="Content" />
+          {sidebarExpanded && <span className="nav-text">Content</span>}
+        </div>
+        {sidebarExpanded && (
+          <div className="nav-subitems">
+            <div className="nav-subitem" onClick={() => router.push('/topicspage')}>
+              Topics
+            </div>
+            <div className="nav-subitem" onClick={() => router.push('/pyp')}>
+              PYP
+            </div>
           </div>
+        )}
+      </div>
+      <div className="nav-item" onClick={() => router.push('/activitystatspage')}>
+        <img src="/icons/ActivityIcon2.png" alt="Activity" />
+        {sidebarExpanded && <span className="nav-text">Activity <p /> Stats</span>}
+      </div>
+    </nav>
+    {/* Always Visible Sign Out Button */}
+    <button className="nav-item sign-out-button" onClick={handleSignOut}>
+      {sidebarExpanded && <span className="nav-text">Sign Out</span>}
+    </button>
+  </div>
+
+
+
 
           {/* Main Content */}
           <div className={`main-content ${sidebarExpanded ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
             <div className="content-wrapper">
               {/* Welcome Header */}
             <h1 className="welcome-title">Hi, welcome back {userName || 'Guest'}</h1>
+            
+
 
               {/* Recent Quiz Section */}
               <div className="recent-quiz-section">
@@ -290,7 +302,6 @@ const HomePage = () => {
           padding: 44px 20px 20px;
           display: flex;
           flex-direction: column;
-          gap: 40px;
           z-index: 100;
           transition: all 0.3s ease;
         }
@@ -315,6 +326,7 @@ const HomePage = () => {
           border-radius: 12px;
           transition: all 0.3s;
           align-self: flex-start;
+          margin-bottom: 40px;
         }
 
         .menu-button:hover {
@@ -332,8 +344,9 @@ const HomePage = () => {
           display: flex;
           flex-direction: column;
           gap: 8px;
+          flex: 1;
         }
-
+        
         .nav-item,
         .nav-item-parent {
           display: flex;
@@ -347,29 +360,29 @@ const HomePage = () => {
           font-weight: 500;
           white-space: nowrap;
         }
-
+        
         .nav-item {
           align-items: center;
           gap: 12px;
           padding: 16px;
           flex-direction: row;
         }
-
+        
         .nav-item-parent {
           border-radius: 20px;
           padding: 0;
         }
-
+        
         .nav-item.active {
           background-color: rgba(232, 222, 248, 1);
           color: rgba(74, 68, 89, 1);
         }
-
+        
         .nav-item-parent.active {
           background-color: rgba(232, 222, 248, 1);
           color: rgba(74, 68, 89, 1);
         }
-
+        
         .nav-item-main {
           display: flex;
           align-items: center;
@@ -377,28 +390,28 @@ const HomePage = () => {
           padding: 16px;
           color: rgba(255, 255, 255, 0.9);
         }
-
+        
         .sidebar.collapsed .nav-item {
           justify-content: center;
           padding: 16px 12px;
         }
-
+        
         .nav-item:hover {
           background-color: rgba(255, 255, 255, 0.1);
         }
-
-                .nav-item-parent:not(.active) .nav-item-main:hover {
+        
+        .nav-item-parent:not(.active) .nav-item-main:hover {
           background-color: rgba(255, 255, 255, 0.1);
           border-radius: 20px;
         }
-
+        
         .nav-subitems {
           display: flex;
           flex-direction: column;
           padding: 0 16px 12px 16px;
           gap: 4px;
         }
-
+        
         .nav-subitem {
           padding: 10px 16px;
           font-size: 13px;
@@ -407,31 +420,53 @@ const HomePage = () => {
           transition: background-color 0.2s;
           color: rgba(74, 68, 89, 0.8);
         }
-
+        
         .nav-subitem:hover {
           background-color: rgba(255, 255, 255, 0.5);
         }
-
+        
         .nav-subitem.active-sub {
           background-color: rgba(103, 80, 164, 0.2);
           color: rgba(74, 68, 89, 1);
           font-weight: 600;
         }
-
-        .nav-item img {
-          width: 24px;
-          height: 24px;
-          flex-shrink: 0;
-        }
-
+        
         .nav-text {
           transition: opacity 0.3s;
         }
-
+        
         .sidebar.collapsed .nav-text {
           display: none;
         }
+        
+        /* Styling for the Sign-Out button */
+        .nav-item.sign-out-button {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          padding: 16px;
+          cursor: pointer;
+          background: rgba(255, 99, 71, 0.9);
+          border: none;
+          transition: all 0.3s;
+          border-radius: 100px;
+          color: white;
+          font-size: 14px;
+          font-family: Roboto, sans-serif;
+          font-weight: 500;
+          margin-top: auto;
+        }
 
+        .nav-item.sign-out-button:hover {
+          background: rgba(255, 69, 0, 1);
+          transform: scale(1.02);
+        }
+
+        .sidebar.collapsed .nav-item.sign-out-button {
+          padding: 16px 12px;
+        }
+        
         /* Main Content */
         .main-content {
           flex: 1;
