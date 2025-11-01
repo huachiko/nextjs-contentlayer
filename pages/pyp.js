@@ -2,108 +2,13 @@ import React, { useState } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 
-// Video Component based on score
-function ScoreVideo({ score }) {
-  const getVideoUrl = () => {
-    if (score >= 90) return '/videos/excellent.mp4';
-    if (score >= 75) return '/videos/great.mp4';
-    if (score >= 60) return '/videos/good.mp4';
-    if (score >= 40) return '/videos/okay.mp4';
-    return '/videos/keep-trying.mp4';
-  };
-
-  return (
-    <video 
-      autoPlay 
-      loop 
-      muted 
-      playsInline
-      style={{ 
-        width: '250px', 
-        height: '250px', 
-        objectFit: 'contain',
-        borderRadius: '20px'
-      }}
-    >
-      <source src={getVideoUrl()} type="video/mp4" />
-      Your browser does not support the video tag.
-    </video>
-  );
-}
-
-// Results Modal Component
-function ResultsModal({ score, totalQuestions, correctAnswers, onClose }) {
-  return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center',
-      justifyContent: 'center', zIndex: 1000, padding: '20px'
-    }}>
-      <div style={{
-        background: 'white', borderRadius: '40px', padding: '60px 40px',
-        maxWidth: '600px', width: '100%', textAlign: 'center',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
-      }}>
-        <h1 style={{
-          fontSize: '48px', fontWeight: 900, marginBottom: '20px',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          letterSpacing: '2px', fontFamily: 'Inter, sans-serif'
-        }}>
-          {score >= 60 ? 'CONGRATULATIONS' : 'KEEP PRACTICING'}
-        </h1>
-
-        <ScoreVideo score={score} />
-
-        <div style={{
-          fontSize: '72px', fontWeight: 900, margin: '20px 0',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          fontFamily: 'Inter, sans-serif'
-        }}>
-          {score}%
-        </div>
-
-        <div style={{ margin: '30px 0' }}>
-          <div style={{ fontSize: '14px', color: '#666', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px' }}>
-            Correct Answers
-          </div>
-          <div style={{ fontSize: '24px', fontWeight: 700, color: '#333' }}>
-            {correctAnswers} / {totalQuestions}
-          </div>
-        </div>
-
-        <p style={{ fontSize: '18px', color: '#666', margin: '30px 0', lineHeight: '1.6', fontFamily: 'Inter, sans-serif' }}>
-          {score >= 60 ? "Great job! You've mastered emath!" : "Don't give up! Keep practicing to improve your score."}
-        </p>
-
-        <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginTop: '40px' }}>
-          <button onClick={onClose} style={{
-            padding: '16px 32px', fontSize: '16px', fontWeight: 600, borderRadius: '50px',
-            cursor: 'pointer', border: 'none', fontFamily: 'Inter, sans-serif',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white',
-            transition: 'all 0.3s'
-          }}>
-            Return Home
-          </button>
-          <button onClick={() => window.location.reload()} style={{
-            padding: '16px 32px', fontSize: '16px', fontWeight: 600, borderRadius: '50px',
-            cursor: 'pointer', border: 'none', fontFamily: 'Inter, sans-serif',
-            background: '#f5f5f5', color: '#333', transition: 'all 0.3s'
-          }}>
-            Try Again
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+const pyp_questions = require('data/pyp_questions');
 
 const PYPQuizPage = () => {
   const router = useRouter()
   const { year, title } = router.query
   
-  const totalQuestions = 10
+  const totalQuestions = pyp_questions.length
   const [currentQuestion, setCurrentQuestion] = useState(1)
   const [showSolution, setShowSolution] = useState(false)
   const [showAnswer, setShowAnswer] = useState(false)
@@ -111,15 +16,51 @@ const PYPQuizPage = () => {
   const [sidebarExpanded, setSidebarExpanded] = useState(true)
   const [questionStatuses, setQuestionStatuses] = useState({})
   const [showResults, setShowResults] = useState(false)
+  const [generatedSolution, setGeneratedSolution] = useState(null)
+  const [isLoadingSolution, setIsLoadingSolution] = useState(false)
 
+  // get current question data from question bank
+  const currentQuestionData = pyp_questions[currentQuestion - 1]
+  
   const toggleSidebar = () => {
     setSidebarExpanded(!sidebarExpanded)
   }
 
-  const handleShowSolution = () => {
-    setShowSolution(!showSolution)
-    if (!showAnswer) {
+  // function to generate solution using API
+  const generateSolution = async () => {
+    setIsLoadingSolution(true)
+    try {
+      const response = await fetch('/api/pyp-generate-solution', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          question: currentQuestionData.question,
+          answer: currentQuestionData.answer
+        }),
+      })
+
+      const data = await response.json()
+      setGeneratedSolution(data.solution || 'Solution could not be generated.')
+    } catch (error) {
+      console.error('Error generating solution:', error)
+      setGeneratedSolution('Error generating solution. Please try again.')
+    } finally {
+      setIsLoadingSolution(false)
+    }
+  }
+
+  const handleShowSolution = async () => {
+    if (!showSolution) {
+      // Only generate if we haven't already
+      if (!generatedSolution) {
+        await generateSolution()
+      }
+      setShowSolution(true)
       setShowAnswer(true)
+    } else {
+      setShowSolution(false)
     }
   }
 
@@ -172,6 +113,7 @@ const PYPQuizPage = () => {
       setShowSolution(false)
       setShowAnswer(false)
       setSelectedAnswer(null)
+      setGeneratedSolution(null)
     }
   }
 
@@ -181,6 +123,7 @@ const PYPQuizPage = () => {
       setShowSolution(false)
       setShowAnswer(false)
       setSelectedAnswer(null)
+      setGeneratedSolution(null)
     }
   }
 
@@ -189,9 +132,24 @@ const PYPQuizPage = () => {
     setShowSolution(false)
     setShowAnswer(false)
     setSelectedAnswer(null)
+    setGeneratedSolution(null)
   }
 
   const questionNumbers = Array.from({ length: totalQuestions }, (_, i) => i + 1)
+
+  // Format question text with proper line breaks
+  const formatQuestionText = (text) => {
+    return text.split('\n').map((line, index) => (
+      <p key={index} className="question-text-line">{line}</p>
+    ))
+  }
+
+  // Format answer text with proper line breaks
+  const formatAnswerText = (text) => {
+    return text.split('\n').map((line, index) => (
+      <p key={index} style={{ marginBottom: '8px' }}>{line}</p>
+    ))
+  }
 
   return (
     <>
@@ -256,26 +214,21 @@ const PYPQuizPage = () => {
               <h2 className="question-title">Question {currentQuestion}</h2>
               
               <div className="question-content">
-                <p className="question-text">
-                  Use the substitution <em>u = 4<sup>x</sup></em> to solve each of the following equations.
-                </p>
-                
-                <div className="equation-list">
-                  <p className="equation">
-                    (a) 2(4<sup>x</sup>) + 4<sup>x+2</sup> = 9(4<sup>-0.5</sup>)
-                  </p>
-                  <p className="equation">
-                    (b) 4<sup>x-a</sup> + 16<sup>x</sup> = 66
-                  </p>
+                <div className="question-text">
+                  {formatQuestionText(currentQuestionData.question)}
                 </div>
 
                 {/* Solution Display */}
                 {showSolution && (
                   <div className="solution-box">
                     <h3>Full Solution:</h3>
-                    <p>Step 1: Let u = 4<sup>x</sup></p>
-                    <p>Step 2: Substitute into the equation...</p>
-                    <p className="solution-detail">(Solution steps would go here)</p>
+                    {isLoadingSolution ? (
+                      <div className="loading-spinner">Generating solution...</div>
+                    ) : (
+                      <div className="solution-detail">
+                        {generatedSolution || 'Solution not available.'}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -283,8 +236,7 @@ const PYPQuizPage = () => {
                 {showAnswer && (
                   <div className="answer-box">
                     <h3>Answer:</h3>
-                    <p>(a) x = -1.5</p>
-                    <p>(b) x = 2</p>
+                    {formatAnswerText(currentQuestionData.answer)}
                   </div>
                 )}
               </div>
@@ -294,6 +246,7 @@ const PYPQuizPage = () => {
                 <button 
                   className="btn-outline"
                   onClick={handleShowSolution}
+                  disabled={isLoadingSolution}
                 >
                   {showSolution ? 'Hide Solution' : 'Show Full Solution'}
                 </button>
@@ -1083,6 +1036,103 @@ const PYPQuizPage = () => {
       `}</style>
     </>
   )
+}
+
+// shows video depending on score
+function ScoreVideo({ score }) {
+  const getVideoUrl = () => {
+    if (score >= 90) return '/videos/excellent.mp4';
+    if (score >= 75) return '/videos/great.mp4';
+    if (score >= 60) return '/videos/good.mp4';
+    if (score >= 40) return '/videos/okay.mp4';
+    return '/videos/keep-trying.mp4';
+  };
+
+  return (
+    <video 
+      autoPlay 
+      loop 
+      muted 
+      playsInline
+      style={{ 
+        width: '250px', 
+        height: '250px', 
+        objectFit: 'contain',
+        borderRadius: '20px'
+      }}
+    >
+      <source src={getVideoUrl()} type="video/mp4" />
+      Your browser does not support the video tag.
+    </video>
+  );
+}
+
+// results page; appears when "end session" is clicked
+function ResultsModal({ score, totalQuestions, correctAnswers, onClose }) {
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+      background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center',
+      justifyContent: 'center', zIndex: 1000, padding: '20px'
+    }}>
+      <div style={{
+        background: 'white', borderRadius: '40px', padding: '60px 40px',
+        maxWidth: '600px', width: '100%', textAlign: 'center',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+      }}>
+        <h1 style={{
+          fontSize: '48px', fontWeight: 900, marginBottom: '20px',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          letterSpacing: '2px', fontFamily: 'Inter, sans-serif'
+        }}>
+          {score >= 60 ? 'CONGRATULATIONS' : 'KEEP PRACTICING'}
+        </h1>
+
+        <ScoreVideo score={score} />
+
+        <div style={{
+          fontSize: '72px', fontWeight: 900, margin: '20px 0',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          fontFamily: 'Inter, sans-serif'
+        }}>
+          {score}%
+        </div>
+
+        <div style={{ margin: '30px 0' }}>
+          <div style={{ fontSize: '14px', color: '#666', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px' }}>
+            Correct Answers
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 700, color: '#333' }}>
+            {correctAnswers} / {totalQuestions}
+          </div>
+        </div>
+
+        <p style={{ fontSize: '18px', color: '#666', margin: '30px 0', lineHeight: '1.6', fontFamily: 'Inter, sans-serif' }}>
+          {score >= 60 ? "Great job! You've mastered Amath!" : "Don't give up! Keep practicing to improve your score."}
+        </p>
+
+        <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginTop: '40px' }}>
+          <button onClick={onClose} style={{
+            padding: '16px 32px', fontSize: '16px', fontWeight: 600, borderRadius: '50px',
+            cursor: 'pointer', border: 'none', fontFamily: 'Inter, sans-serif',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white',
+            transition: 'all 0.3s'
+          }}>
+            Return Home
+          </button>
+          <button onClick={() => window.location.reload()} style={{
+            padding: '16px 32px', fontSize: '16px', fontWeight: 600, borderRadius: '50px',
+            cursor: 'pointer', border: 'none', fontFamily: 'Inter, sans-serif',
+            background: '#f5f5f5', color: '#333', transition: 'all 0.3s'
+          }}>
+            Try Again
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default PYPQuizPage
