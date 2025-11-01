@@ -1,11 +1,21 @@
 import { useState } from 'react';
+import { useRouter } from 'next/router';
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [name, setName] = useState('Ally lee');
   const [gender, setGender] = useState('F');
   const [email, setEmail] = useState('');
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const [sidebarExpanded, setSidebarExpanded] = useState(true);
+
+  const handleSignOut = () => {
+    localStorage.removeItem('user');
+    router.push('/');
+  };
+
+  const toggleSidebar = () => setSidebarExpanded(!sidebarExpanded);
 
   return (
     <>
@@ -18,36 +28,130 @@ export default function ProfilePage() {
         }
 
         .sidebar {
-          width: 175px;
-          background-color: #6b7d66;
-          padding: 20px 15px;
+          width: 174px;
+          min-width: 174px;
+          background-color: rgba(125, 140, 122, 1);
+          position: fixed;
+          left: 0;
+          top: 0;
+          height: 100vh;
+          padding: 44px 20px 20px;
+          display: flex;
+          flex-direction: column;
+          z-index: 100;
+          transition: all 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+          width: 80px;
+          min-width: 80px;
+          padding: 44px 12px 20px;
+        }
+
+        .menu-button {
+          width: 56px;
+          height: 56px;
+          background: rgba(255, 255, 255, 0.1);
+          border: none;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 24px;
+          color: white;
+          border-radius: 12px;
+          transition: all 0.3s;
+          align-self: flex-start;
+          margin-bottom: 40px;
+        }
+
+        .menu-button:hover {
+          background: rgba(255, 255, 255, 0.2);
+          transform: scale(1.05);
+        }
+
+        .menu-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .nav-items {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          flex: 1;
         }
 
         .nav-item {
           display: flex;
           align-items: center;
           gap: 12px;
-          padding: 12px 16px;
-          margin-bottom: 8px;
-          color: #d4dcd0;
+          padding: 16px;
+          color: rgba(255, 255, 255, 0.9);
           text-decoration: none;
-          border-radius: 8px;
-          font-size: 15px;
+          border-radius: 100px;
+          font-size: 14px;
           transition: background-color 0.2s;
+          cursor: pointer;
+          font-family: Roboto, sans-serif;
+          font-weight: 500;
+          white-space: nowrap;
         }
 
         .nav-item:hover {
-          background-color: #5a6b56;
+          background-color: rgba(255, 255, 255, 0.1);
         }
 
         .nav-item.active {
-          background-color: #d4dcd0;
-          color: #2d3a2d;
+          background-color: rgba(232, 222, 248, 1);
+          color: rgba(74, 68, 89, 1);
+        }
+
+        .sidebar.collapsed .nav-item {
+          justify-content: center;
+          padding: 16px 12px;
         }
 
         .icon {
-          width: 20px;
-          height: 20px;
+          width: 24px;
+          height: 24px;
+          flex-shrink: 0;
+        }
+
+        .nav-text {
+          transition: opacity 0.3s;
+        }
+
+        .sidebar.collapsed .nav-text {
+          display: none;
+        }
+
+        .nav-item.sign-out-button {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          padding: 16px;
+          cursor: pointer;
+          background: rgba(255, 99, 71, 0.9);
+          border: none;
+          transition: all 0.3s;
+          border-radius: 100px;
+          color: white;
+          font-size: 14px;
+          font-family: Roboto, sans-serif;
+          font-weight: 500;
+          margin-top: auto;
+        }
+
+        .nav-item.sign-out-button:hover {
+          background: rgba(255, 69, 0, 1);
+          transform: scale(1.02);
+        }
+
+        .sidebar.collapsed .nav-item.sign-out-button {
+          padding: 16px 12px;
         }
 
         .main-content {
@@ -56,6 +160,12 @@ export default function ProfilePage() {
           align-items: center;
           justify-content: center;
           padding: 40px;
+          margin-left: 174px;
+          transition: all 0.3s ease;
+        }
+
+        .main-content.sidebar-collapsed {
+          margin-left: 80px;
         }
 
         .profile-card {
@@ -145,42 +255,77 @@ export default function ProfilePage() {
           font-weight: 700;
           color: #1a1a1a;
         }
+
+        @media(max-width: 768px) {
+          .sidebar {
+            width: 80px;
+            min-width: 80px;
+            padding: 44px 12px 20px;
+          }
+
+          .sidebar.collapsed {
+            width: 60px;
+            min-width: 60px;
+            padding: 44px 8px 20px;
+          }
+
+          .sidebar .nav-text {
+            display: none;
+          }
+
+          .main-content {
+            margin-left: 80px;
+            padding: 24px;
+          }
+
+          .main-content.sidebar-collapsed {
+            margin-left: 60px;
+          }
+        }
       `}</style>
 
       <div className="container">
-        <aside className="sidebar">
-          <nav style={{ marginTop: '40px' }}>
-            <a href="#" className="nav-item">
+        <aside className={`sidebar ${sidebarExpanded ? 'expanded' : 'collapsed'}`}>
+          <button className="menu-button" onClick={toggleSidebar}>
+            <div className="menu-icon">{sidebarExpanded ? '✕' : '☰'}</div>
+          </button>
+          
+          <nav className="nav-items">
+            <div className="nav-item" onClick={() => router.push('/homepage')}>
               <svg className="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
-              <span>Home</span>
-            </a>
+              {sidebarExpanded && <span className="nav-text">Home</span>}
+            </div>
             
-            <a href="#" className="nav-item active">
+            <div className="nav-item active" onClick={() => router.push('/profile')}>
               <svg className="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
-              <span>Profile</span>
-            </a>
+              {sidebarExpanded && <span className="nav-text">Profile</span>}
+            </div>
             
-            <a href="#" className="nav-item">
+            <div className="nav-item" onClick={() => router.push('/topicspage')}>
               <svg className="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <span>Content</span>
-            </a>
+              {sidebarExpanded && <span className="nav-text">Content</span>}
+            </div>
             
-            <a href="#" className="nav-item">
+            <div className="nav-item" onClick={() => router.push('/activitystatspage')}>
               <svg className="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
-              <span>Activity Stats</span>
-            </a>
+              {sidebarExpanded && <span className="nav-text">Activity Stats</span>}
+            </div>
           </nav>
+
+          <button className="nav-item sign-out-button" onClick={handleSignOut}>
+            {sidebarExpanded && <span className="nav-text">Sign Out</span>}
+          </button>
         </aside>
 
-        <main className="main-content">
+        <main className={`main-content ${sidebarExpanded ? '' : 'sidebar-collapsed'}`}>
           <div className="profile-card">
             <div className="avatar-container">
               <div className="avatar">
