@@ -104,7 +104,7 @@ const Topicspage = () => {
               </button>
             </div>
             <div className="topicspage-segments">
-              <div className="topicspage-navitem01" onClick={() => router.push('/homepage')}>
+              <div className="topicspage-navitem01" onClick={() => router.push('/home')}>
                 <img src="/icons/HomeIcon2.png" alt="Home" className="topicspage-icon" />
                 {sidebarExpanded && <span className="topicspage-text">Home</span>}
               </div>
