@@ -11,7 +11,7 @@ const Topicspage = () => {
   const [userName, setUserName] = useState('');
   const [statusMessage, setStatusMessage] = useState('Im cooked');
 
-  // keep userId so the page “remembers” it; we’ll also pass it to /quiz
+  // keep userId so the page "remembers" it; we'll also pass it to /quiz
   const [userId, setUserId] = useState(null);
 
   const [isEditingName, setIsEditingName] = useState(false);
@@ -64,6 +64,11 @@ const Topicspage = () => {
 
   const toggleSidebar = () => setSidebarExpanded(!sidebarExpanded);
 
+  const handleSignOut = () => {
+    localStorage.removeItem('user');
+    router.push('/');
+  };
+
   const handleNameSubmit = (e) => {
     if (e.key === 'Enter' || e.type === 'blur') {
       setIsEditingName(false);
@@ -99,7 +104,7 @@ const Topicspage = () => {
               </button>
             </div>
             <div className="topicspage-segments">
-              <div className="topicspage-navitem01" onClick={() => router.push('/home')}>
+              <div className="topicspage-navitem01" onClick={() => router.push('/homepage')}>
                 <img src="/icons/HomeIcon2.png" alt="Home" className="topicspage-icon" />
                 {sidebarExpanded && <span className="topicspage-text">Home</span>}
               </div>
@@ -125,9 +130,14 @@ const Topicspage = () => {
               </div>
               <div className="topicspage-navitem04" onClick={() => router.push('/activitystatspage')}>
                 <img src="/icons/ActivityIcon2.png" alt="Activity" className="topicspage-icon" />
-                {sidebarExpanded && <span className="topicspage-text">Activity <p/> Stats</span>}
+                {sidebarExpanded && <span className="topicspage-text">Activity Stats</span>}
               </div>
             </div>
+            
+            {/* Sign Out Button */}
+            <button className="topicspage-sign-out-button" onClick={handleSignOut}>
+              {sidebarExpanded && <span className="topicspage-text">Sign Out</span>}
+            </button>
           </div>
 
           {/* Main Content */}
@@ -526,7 +536,6 @@ const Topicspage = () => {
 
           /* Sidebar */
           .topicspage-navigation-rail-expanded {
-            gap: 40px;
             width: 174px;
             min-width: 174px;
             min-height: 100vh;
@@ -554,6 +563,7 @@ const Topicspage = () => {
             display: flex;
             position: relative;
             align-items: flex-start;
+            margin-bottom: 40px;
           }
 
           .topicspage-iconbuttonstandard {
@@ -592,6 +602,7 @@ const Topicspage = () => {
             align-items: flex-start;
             flex-direction: column;
             gap: 8px;
+            flex: 1;
           }
 
           .topicspage-navitem01,
@@ -642,6 +653,34 @@ const Topicspage = () => {
 
           .topicspage-navigation-rail-expanded.collapsed .topicspage-text {
             display: none;
+          }
+
+          .topicspage-sign-out-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 16px;
+            width: 100%;
+            cursor: pointer;
+            background: rgba(255, 99, 71, 0.9);
+            border: none;
+            transition: all 0.3s;
+            border-radius: 100px;
+            color: white;
+            font-size: 14px;
+            font-family: Roboto, sans-serif;
+            font-weight: 500;
+            margin-top: auto;
+          }
+
+          .topicspage-sign-out-button:hover {
+            background: rgba(255, 69, 0, 1);
+            transform: scale(1.02);
+          }
+
+          .topicspage-navigation-rail-expanded.collapsed .topicspage-sign-out-button {
+            padding: 16px 12px;
           }
 
 
