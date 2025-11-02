@@ -26,6 +26,11 @@ const PYPQuizPage = () => {
     setSidebarExpanded(!sidebarExpanded)
   }
 
+  const handleSignOut = () => {
+    localStorage.removeItem('user');
+    router.push('/');
+  };
+
   // function to generate solution using API
   const generateSolution = async () => {
     setIsLoadingSolution(true)
@@ -165,7 +170,7 @@ const PYPQuizPage = () => {
               <div className="menu-icon">{sidebarExpanded ? '✕' : '☰'}</div>
             </button>
             <nav className="nav-items">
-              <div className="nav-item" onClick={() => router.push('/')}>
+              <div className="nav-item" onClick={() => router.push('/homepage')}>
                 <img src="/icons/HomeIcon2.png" alt="Home" />
                 {sidebarExpanded && <span className="nav-text">Home</span>}
               </div>
@@ -191,9 +196,14 @@ const PYPQuizPage = () => {
               </div>
               <div className="nav-item" onClick={() => router.push('/activitystatspage')}>
                 <img src="/icons/ActivityIcon2.png" alt="Activity" />
-                {sidebarExpanded && <span className="nav-text">Activity <p/> Stats</span>}
+                {sidebarExpanded && <span className="nav-text">Activity Stats</span>}
               </div>
             </nav>
+            
+            {/* Sign Out Button */}
+            <button className="nav-item sign-out-button" onClick={handleSignOut}>
+              {sidebarExpanded && <span className="nav-text">Sign Out</span>}
+            </button>
           </div>
 
           {/* Main Content */}
@@ -338,7 +348,7 @@ const PYPQuizPage = () => {
             score={calculateResults().score}
             totalQuestions={calculateResults().totalQuestions}
             correctAnswers={calculateResults().correctAnswers}
-            onClose={() => router.push('/')}
+            onClose={() => router.push('/homepage')}
           />
         )}
       </div>
@@ -377,7 +387,6 @@ const PYPQuizPage = () => {
           padding: 44px 20px 20px;
           display: flex;
           flex-direction: column;
-          gap: 40px;
           z-index: 100;
           transition: all 0.3s ease;
         }
@@ -402,6 +411,7 @@ const PYPQuizPage = () => {
           border-radius: 12px;
           transition: all 0.3s;
           align-self: flex-start;
+          margin-bottom: 40px;
         }
         
         .menu-button:hover {
@@ -419,6 +429,7 @@ const PYPQuizPage = () => {
           display: flex;
           flex-direction: column;
           gap: 8px;
+          flex: 1;
         }
 
         .nav-item,
@@ -511,6 +522,33 @@ const PYPQuizPage = () => {
 
         .sidebar.collapsed .nav-text {
           display: none;
+        }
+
+        .nav-item.sign-out-button {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          padding: 16px;
+          cursor: pointer;
+          background: rgba(255, 99, 71, 0.9);
+          border: none;
+          transition: all 0.3s;
+          border-radius: 100px;
+          color: white;
+          font-size: 14px;
+          font-family: Roboto, sans-serif;
+          font-weight: 500;
+          margin-top: auto;
+        }
+
+        .nav-item.sign-out-button:hover {
+          background: rgba(255, 69, 0, 1);
+          transform: scale(1.02);
+        }
+
+        .sidebar.collapsed .nav-item.sign-out-button {
+          padding: 16px 12px;
         }
 
         /* Main Content */
