@@ -170,7 +170,7 @@ const PYPQuizPage = () => {
               <div className="menu-icon">{sidebarExpanded ? '✕' : '☰'}</div>
             </button>
             <nav className="nav-items">
-              <div className="nav-item" onClick={() => router.push('/homepage')}>
+              <div className="nav-item" onClick={() => router.push('/home')}>
                 <img src="/icons/HomeIcon2.png" alt="Home" />
                 {sidebarExpanded && <span className="nav-text">Home</span>}
               </div>
@@ -348,7 +348,7 @@ const PYPQuizPage = () => {
             score={calculateResults().score}
             totalQuestions={calculateResults().totalQuestions}
             correctAnswers={calculateResults().correctAnswers}
-            onClose={() => router.push('/homepage')}
+            onClose={() => router.push('/home')}
           />
         )}
       </div>
