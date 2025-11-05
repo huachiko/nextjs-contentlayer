@@ -282,6 +282,11 @@ const toggleSidebar = () => {
   setSidebarExpanded(!sidebarExpanded)
 };
 
+const handleSignOut = () => {
+  localStorage.removeItem('user');
+  router.push('/');
+};
+
   const handleShowSolution = () => {
     setShowSolution(!showSolution)
     if (!showAnswer) {
@@ -407,7 +412,7 @@ const toggleSidebar = () => {
               <div className="menu-icon">{sidebarExpanded ? '✕' : '☰'}</div>
             </button>
             <nav className="nav-items">
-              <div className="nav-item" onClick={() => router.push('/')}>
+              <div className="nav-item" onClick={() => router.push('/home')}>
                 <img src="/icons/HomeIcon2.png" />
                 {sidebarExpanded && <span className="nav-text">Home</span>}
               </div>
@@ -433,9 +438,14 @@ const toggleSidebar = () => {
               </div>
               <div className="nav-item"onClick={() => router.push('/activitystatspage')}>
                 <img src="/icons/ActivityIcon2.png"  />
-                {sidebarExpanded && <span className="nav-text">Activity <p/> Stats</span>}
+                {sidebarExpanded && <span className="nav-text">Activity Stats</span>}
               </div>
             </nav>
+            
+            {/* Sign Out Button */}
+            <button className="nav-item sign-out-button" onClick={handleSignOut}>
+              {sidebarExpanded && <span className="nav-text">Sign Out</span>}
+            </button>
           </div>
 
           {/* Main Content */}
@@ -746,7 +756,6 @@ const toggleSidebar = () => {
           padding: 44px 20px 20px;
           display: flex;
           flex-direction: column;
-          gap: 40px;
           z-index: 100;
           transition: all 0.3s ease;
         }
@@ -771,6 +780,7 @@ const toggleSidebar = () => {
           border-radius: 12px;
           transition: all 0.3s;
           align-self: flex-start;
+          margin-bottom: 40px;
         }
         
         .menu-button:hover {
@@ -788,6 +798,7 @@ const toggleSidebar = () => {
           display: flex;
           flex-direction: column;
           gap: 8px;
+          flex: 1;
         }
 
         .nav-item {
@@ -909,6 +920,33 @@ const toggleSidebar = () => {
 
         .sidebar.collapsed .nav-text {
           display: none;
+        }
+
+        .nav-item.sign-out-button {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          padding: 16px;
+          cursor: pointer;
+          background: rgba(255, 99, 71, 0.9);
+          border: none;
+          transition: all 0.3s;
+          border-radius: 100px;
+          color: white;
+          font-size: 14px;
+          font-family: Roboto, sans-serif;
+          font-weight: 500;
+          margin-top: auto;
+        }
+
+        .nav-item.sign-out-button:hover {
+          background: rgba(255, 69, 0, 1);
+          transform: scale(1.02);
+        }
+
+        .sidebar.collapsed .nav-item.sign-out-button {
+          padding: 16px 12px;
         }
 
         .main-content {
