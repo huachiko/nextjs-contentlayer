@@ -21,73 +21,209 @@ export default function AuthPages() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (isSignUp) {
-    if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
+    if (isSignUp) {
+      if (formData.password !== formData.confirmPassword) {
+        alert('Passwords do not match!');
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: formData.username.trim(),
+            displayName: formData.displayName.trim(),
+            email: formData.email.trim(),
+            password: formData.password
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data?.error || "Sign up failed");
+          return;
+        }
+        localStorage.setItem("user", JSON.stringify(data.user));
+        alert("Sign up successful!");
+        router.push("/home");
+      } catch (err) {
+        console.error(err);
+        alert("Network error during sign up");
+      }
       return;
     }
 
+    // Sign in
     try {
-      const res = await fetch("/api/signup", {
+      const res = await fetch("/api/signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          username: formData.username.trim(),
-          displayName: formData.displayName.trim(),
           email: formData.email.trim(),
           password: formData.password
         })
       });
       const data = await res.json();
       if (!res.ok) {
-        alert(data?.error || "Sign up failed");
+        // If user not found: prompt to sign up
+        if (res.status === 404) {
+          alert("No account found. Please sign up.");
+          setIsSignUp(true);
+        } else {
+          alert(data?.error || "Sign in failed");
+        }
         return;
       }
-    localStorage.setItem("user", JSON.stringify(data.user));
-alert("Sign up successful!");
-router.push("/home");
+      localStorage.setItem("user", JSON.stringify(data.user));
+      alert("Sign in successful!");
+      router.push("/home");
     } catch (err) {
       console.error(err);
-      alert("Network error during sign up");
+      alert("Network error during sign in");
     }
-    return;
-  }
-
-  // Sign in
-  try {
-    const res = await fetch("/api/signin", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: formData.email.trim(),
-        password: formData.password
-      })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      // If user not found: prompt to sign up
-      if (res.status === 404) {
-        alert("No account found. Please sign up.");
-        setIsSignUp(true);
-      } else {
-        alert(data?.error || "Sign in failed");
-      }
-      return;
-    }
-    localStorage.setItem("user", JSON.stringify(data.user));
-alert("Sign in successful!");
-router.push("/home"); // redirects to your home page
-  } catch (err) {
-    console.error(err);
-    alert("Network error during sign in");
-  }
-};
-
+  };
 
   return (
     <>
+      <div className="auth-container">
+        <div className="auth-card">
+          {/* Left Panel - Form */}
+          <div className="auth-left-panel">
+            {!isSignUp ? (
+              // Sign In Form
+              <div className="auth-form-container">
+                <h1 className="auth-heading">Welcome!</h1>
+                <p className="auth-subheading">Sign in to your Account</p>
+                
+                <form onSubmit={handleSubmit} className="auth-form">
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="Email Address"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="auth-input"
+                    required
+                  />
+                  
+                  <input
+                    type="password"
+                    name="password"
+                    placeholder="Password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="auth-input"
+                    required
+                  />
+                  
+                  <button
+                    type="submit"
+                    className="auth-submit-button"
+                  >
+                    SIGN IN
+                  </button>
+                </form>
+                
+                <p className="auth-link-text">
+                  Don't have an account?{' '}
+                  <span
+                    onClick={() => setIsSignUp(true)}
+                    className="auth-link"
+                  >
+                    Sign up today
+                  </span>
+                </p>
+              </div>
+            ) : (
+              // Sign Up Form
+              <div className="auth-form-container">
+                <h1 className="auth-heading">Sign up</h1>
+                
+                <form onSubmit={handleSubmit} className="auth-form">
+                  <input
+                    type="text"
+                    name="username"
+                    placeholder="Username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    className="auth-input"
+                    required
+                  />
+                  
+                  <input
+                    type="text"
+                    name="displayName"
+                    placeholder="Display name"
+                    value={formData.displayName}
+                    onChange={handleChange}
+                    className="auth-input"
+                    required
+                  />
+                  
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="Email Address"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="auth-input"
+                    required
+                  />
+                  
+                  <input
+                    type="password"
+                    name="password"
+                    placeholder="Password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="auth-input"
+                    required
+                  />
+                  
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    placeholder="Confirm password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className="auth-input"
+                    required
+                  />
+                  
+                  <button
+                    type="submit"
+                    className="auth-submit-button"
+                  >
+                    SUBMIT
+                  </button>
+                </form>
+                
+                <p className="auth-link-text">
+                  Already have an account?{' '}
+                  <span
+                    onClick={() => setIsSignUp(false)}
+                    className="auth-link"
+                  >
+                    Sign in
+                  </span>
+                </p>
+              </div>
+            )}
+          </div>
+          
+          {/* Right Panel - Image */}
+          <div className="auth-right-panel">
+            <img
+              src="/students.png"
+              alt="Students studying together in a library"
+              className="auth-image"
+            />
+          </div>
+        </div>
+      </div>
+
       <style>{`
         .auth-container {
           min-height: 100vh;
@@ -107,6 +243,7 @@ router.push("/home"); // redirects to your home page
           overflow: hidden;
           display: flex;
           flex-direction: row;
+          align-items: stretch;
         }
         
         .auth-left-panel {
@@ -120,13 +257,15 @@ router.push("/home"); // redirects to your home page
         
         .auth-right-panel {
           width: 50%;
-          height: auto;
+          height: 100%;
+          display: flex;
         }
         
         .auth-image {
           width: 100%;
           height: 100%;
           object-fit: cover;
+          object-position: center;
           display: block;
         }
         
@@ -346,143 +485,6 @@ router.push("/home"); // redirects to your home page
           }
         }
       `}</style>
-      
-      <div className="auth-container">
-        <div className="auth-card">
-          {/* Left Panel - Form */}
-          <div className="auth-left-panel">
-            {!isSignUp ? (
-              // Sign In Form
-              <div className="auth-form-container">
-                <h1 className="auth-heading">Welcome!</h1>
-                <p className="auth-subheading">Sign in to your Account</p>
-                
-                <form onSubmit={handleSubmit} className="auth-form">
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="Email Address"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="auth-input"
-                    required
-                  />
-                  
-                  <input
-                    type="password"
-                    name="password"
-                    placeholder="Password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="auth-input"
-                    required
-                  />
-                  
-                  <button
-                    type="submit"
-                    className="auth-submit-button"
-                  >
-                    SIGN IN
-                  </button>
-                </form>
-                
-                <p className="auth-link-text">
-                  Don't have an account?{' '}
-                  <span
-                    onClick={() => setIsSignUp(true)}
-                    className="auth-link"
-                  >
-                    Sign up today
-                  </span>
-                </p>
-              </div>
-            ) : (
-              // Sign Up Form
-              <div className="auth-form-container">
-                <h1 className="auth-heading">Sign up</h1>
-                
-                <form onSubmit={handleSubmit} className="auth-form">
-                  <input
-                    type="text"
-                    name="username"
-                    placeholder="Username"
-                    value={formData.username}
-                    onChange={handleChange}
-                    className="auth-input"
-                    required
-                  />
-                  
-                  <input
-                    type="text"
-                    name="displayName"
-                    placeholder="Display name"
-                    value={formData.displayName}
-                    onChange={handleChange}
-                    className="auth-input"
-                    required
-                  />
-                  
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="Email Address"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="auth-input"
-                    required
-                  />
-                  
-                  <input
-                    type="password"
-                    name="password"
-                    placeholder="Password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="auth-input"
-                    required
-                  />
-                  
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    placeholder="Confirm password"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    className="auth-input"
-                    required
-                  />
-                  
-                  <button
-                    type="submit"
-                    className="auth-submit-button"
-                  >
-                    SUBMIT
-                  </button>
-                </form>
-                
-                <p className="auth-link-text">
-                  Already have an account?{' '}
-                  <span
-                    onClick={() => setIsSignUp(false)}
-                    className="auth-link"
-                  >
-                    Sign in
-                  </span>
-                </p>
-              </div>
-            )}
-          </div>
-          
-          {/* Right Panel - Image */}
-          <div className="auth-right-panel">
-            <img
-              src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=1000&fit=crop"
-              alt="Students studying together in a library"
-              className="auth-image"
-            />
-          </div>
-        </div>
-      </div>
     </>
   );
 }

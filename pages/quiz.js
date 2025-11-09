@@ -1,15 +1,13 @@
-import React, { useState, useEffect} from 'react'
-import Head from 'next/head'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-
 
 function ScoreVideo({ score }) {
   const getVideoUrl = () => {
-    if (score >= 90) return '/videos/excellent.mp4'; // 90-100%
-    if (score >= 75) return '/videos/great.mp4';     // 75-89%
-    if (score >= 60) return '/videos/good.mp4';      // 60-74%
-    if (score >= 40) return '/videos/okay.mp4';      // 40-59%
-    return '/videos/keep-trying.mp4';                 // 0-39%
+    if (score >= 90) return '/videos/excellent.mp4';
+    if (score >= 75) return '/videos/great.mp4';
+    if (score >= 60) return '/videos/good.mp4';
+    if (score >= 40) return '/videos/okay.mp4';
+    return '/videos/keep-trying.mp4';
   };
 
   return (
@@ -31,23 +29,18 @@ function ScoreVideo({ score }) {
   );
 }
 
-// Results Modal Component
 function ResultsModal({ score, totalQuestions, correctAnswers, topic, onClose, onTryAgain }) {
   const handleClose = () => {
-    // Clear saved session data when modal closes
     if (topic) {
       sessionStorage.removeItem(`quiz_${topic}`)
     }
-    // Navigate back
     onClose()
   }
   
   const handleTryAgain = () => {
-    // Clear session storage
     if (topic) {
       sessionStorage.removeItem(`quiz_${topic}`)
     }
-    // Call the try again handler
     onTryAgain()
   }
   
@@ -119,8 +112,6 @@ function ResultsModal({ score, totalQuestions, correctAnswers, topic, onClose, o
 
 const QuizPage = () => {
   const router = useRouter()
-  const { topic, title } = router.query
-  
   const [currentQuestion, setCurrentQuestion] = useState(1)
   const [showSolution, setShowSolution] = useState(false)
   const [showAnswer, setShowAnswer] = useState(false)
@@ -134,13 +125,20 @@ const QuizPage = () => {
   const [questions, setQuestions] = useState({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [topic, setTopic] = useState('')
+  const [title, setTitle] = useState('')
 
-  // Initialize session ID when component mounts
+  useEffect(() => {
+    if (router.isReady) {
+      setTopic(router.query.topic || '')
+      setTitle(router.query.title || '')
+    }
+  }, [router.isReady, router.query])
+
   useEffect(() => {
     const newSessionId = Date.now().toString()
     setSessionId(newSessionId)
     
-    // Try to load questions from sessionStorage for this topic
     if (topic) {
       const savedData = sessionStorage.getItem(`quiz_${topic}`)
       if (savedData) {
@@ -156,7 +154,6 @@ const QuizPage = () => {
     }
   }, [topic])
 
-  // Save questions to sessionStorage whenever they change
   useEffect(() => {
     if (topic && Object.keys(questions).length > 0) {
       const dataToSave = {
@@ -169,24 +166,18 @@ const QuizPage = () => {
   }, [questions, questionStatuses, maxQuestion, topic])
 
   const generateQuestion = async (questionNumber) => {
-    // Check if question already exists
     if (questions[questionNumber]) {
-      console.log(`Question ${questionNumber} already exists, skipping generation`)
       return
     }
 
-    // Check if already generating this question
     if (loading && currentQuestion === questionNumber) {
-      console.log(`Question ${questionNumber} is already being generated`)
       return
     }
 
-    console.log(`Generating question ${questionNumber}...`)
     setLoading(true)
     setError(null)
 
     try {
-      // Get all previously generated questions to avoid repetition
       const previousQuestionTexts = Object.values(questions)
         .map(q => q.question)
         .filter(Boolean);
@@ -198,7 +189,7 @@ const QuizPage = () => {
         },
         body: JSON.stringify({ 
           topic: title || topic || 'Additional Mathematics',
-          previousQuestions: previousQuestionTexts // Send previous questions to API
+          previousQuestions: previousQuestionTexts
         }),
       });
 
@@ -208,14 +199,10 @@ const QuizPage = () => {
 
       const data = await response.json();
       
-      setQuestions(prev => {
-        const updated = {
-          ...prev,
-          [questionNumber]: data.question
-        }
-        console.log(`Question ${questionNumber} generated and saved`, updated)
-        return updated
-      });
+      setQuestions(prev => ({
+        ...prev,
+        [questionNumber]: data.question
+      }));
     } catch (err) {
       setError(err.message);
       console.error('Error:', err);
@@ -224,68 +211,63 @@ const QuizPage = () => {
     }
   };
 
-  // Load current question if it doesn't exist
-useEffect(() => {
-  if (topic && !questions[currentQuestion] && !loading) {
-    console.log(`Current question ${currentQuestion} doesn't exist, generating...`)
-    generateQuestion(currentQuestion);
-  }
-}, [currentQuestion, topic, questions, loading]); 
+  useEffect(() => {
+    if (topic && !questions[currentQuestion] && !loading) {
+      generateQuestion(currentQuestion);
+    }
+  }, [currentQuestion, topic, questions, loading]); 
 
-  // Pre-generate next question (Option 3)
   useEffect(() => {
     if (questions[currentQuestion] && !questions[currentQuestion + 1]) {
-      console.log(`Pre-generating next question ${currentQuestion + 1}...`)
       setTimeout(() => {
         generateQuestion(currentQuestion + 1)
       }, 500)
     }
   }, [questions, currentQuestion]);
 
- // --- helper: persist a finished quiz session to the DB ---
- // Option A: function declaration
-async function persistQuizSession(topicLabel, correctAnswers, totalQuestions) {
-  try {
-    const raw = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-    if (!raw) { alert("Please sign in first to save your progress."); return; }
+  async function persistQuizSession(topicLabel, correctAnswers, totalQuestions) {
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+      if (!raw) { 
+        alert("Please sign in first to save your progress."); 
+        return; 
+      }
 
-    const user = JSON.parse(raw);
-    const userId = Number(user?.id);
-    if (!userId) { alert("User ID missing. Please sign in again."); return; }
+      const user = JSON.parse(raw);
+      const userId = Number(user?.id);
+      if (!userId) { 
+        alert("User ID missing. Please sign in again."); 
+        return; 
+      }
 
-    const payload = {
-      userId,
-      topic: String(topicLabel || ''),
-      correct: Number(correctAnswers || 0),
-      total: Number(totalQuestions || 0),
-    };
+      const payload = {
+        userId,
+        topic: String(topicLabel || ''),
+        correct: Number(correctAnswers || 0),
+        total: Number(totalQuestions || 0),
+      };
 
-    const res = await fetch('/api/save-quiz', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+      const res = await fetch('/api/save-quiz', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
-    const text = await res.text();
-    console.log('POST /api/save-quiz ->', res.status, text);
-
-    if (!res.ok) {
-      alert(`Failed to save quiz (${res.status}). See console for details.`);
+      if (!res.ok) {
+        console.error(`Failed to save quiz (${res.status})`);
+      }
+    } catch (e) {
+      console.error('Failed to save quiz session:', e);
     }
-  } catch (e) {
-    console.error('Failed to save quiz session:', e);
-    alert('Failed to save quiz: check console for details.');
   }
-}
 
-const toggleSidebar = () => {
-  setSidebarExpanded(!sidebarExpanded)
-};
+  const toggleSidebar = () => {
+    setSidebarExpanded(!sidebarExpanded)
+  };
 
-const handleSignOut = () => {
-  localStorage.removeItem('user');
-  router.push('/');
-};
+  const handleSignOut = () => {
+    router.push('/');
+  };
 
   const handleShowSolution = () => {
     setShowSolution(!showSolution)
@@ -315,36 +297,30 @@ const handleSignOut = () => {
   }
 
   const calculateResults = () => {
-  const statuses = Object.values(questionStatuses || {});
-  const answered = statuses.filter(s => s === 'correct' || s === 'incorrect');
-  const correct = statuses.filter(s => s === 'correct');
-  const totalQuestions = answered.length;
-  const correctAnswers = correct.length;
-  const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
-  return { score, totalQuestions, correctAnswers };
-};
+    const statuses = Object.values(questionStatuses || {});
+    const answered = statuses.filter(s => s === 'correct' || s === 'incorrect');
+    const correct = statuses.filter(s => s === 'correct');
+    const totalQuestions = answered.length;
+    const correctAnswers = correct.length;
+    const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+    return { score, totalQuestions, correctAnswers };
+  };
 
-
- const handleEndSession = async () => {
-  const results = calculateResults();
-  if (results.totalQuestions === 0) {
-    alert('Please answer at least one question before ending the session.');
-    return;
-  }
-  if (confirm('Are you sure you want to end this session? All questions will be cleared.')) {
-    const topicLabel = (title || topic || 'Additional Mathematics');
-
-    await persistQuizSession(topicLabel, results.correctAnswers, results.totalQuestions);
-
-
-    if (topic) {
-      sessionStorage.removeItem(`quiz_${topic}`);
+  const handleEndSession = async () => {
+    const results = calculateResults();
+    if (results.totalQuestions === 0) {
+      alert('Please answer at least one question before ending the session.');
+      return;
     }
-    setShowResults(true);
-  }
-};
-
-
+    if (confirm('Are you sure you want to end this session? All questions will be cleared.')) {
+      const topicLabel = (title || topic || 'Additional Mathematics');
+      await persistQuizSession(topicLabel, results.correctAnswers, results.totalQuestions);
+      if (topic) {
+        sessionStorage.removeItem(`quiz_${topic}`);
+      }
+      setShowResults(true);
+    }
+  };
 
   const handleNext = () => {
     const nextQuestion = currentQuestion + 1
@@ -372,7 +348,6 @@ const handleSignOut = () => {
       setCurrentQuestion(prevQuestion)
       setShowSolution(false)
       setShowAnswer(false)
-      // Set selectedAnswer based on the previous question's status
       const status = questionStatuses[prevQuestion]
       if (status === 'correct' || status === 'incorrect') {
         setSelectedAnswer(status)
@@ -386,7 +361,6 @@ const handleSignOut = () => {
     setCurrentQuestion(questionId)
     setShowSolution(false)
     setShowAnswer(false)
-    // Set selectedAnswer based on the question's status
     const status = questionStatuses[questionId]
     if (status === 'correct' || status === 'incorrect') {
       setSelectedAnswer(status)
@@ -401,23 +375,18 @@ const handleSignOut = () => {
   return (
     <>
       <div className="quiz-container">
-        <Head>
-          <title>Quiz - {title || 'Question'} {currentQuestion}</title>
-        </Head>
-
         <div className="quiz-page">
-          {/* Sidebar Navigation */}
           <div className={`sidebar ${sidebarExpanded ? 'expanded' : 'collapsed'}`}>
             <button className="menu-button" onClick={toggleSidebar}>
               <div className="menu-icon">{sidebarExpanded ? '✕' : '☰'}</div>
             </button>
             <nav className="nav-items">
               <div className="nav-item" onClick={() => router.push('/home')}>
-                <img src="/icons/HomeIcon2.png" />
+                <img src="/icons/HomeIcon2.png" alt="Home" />
                 {sidebarExpanded && <span className="nav-text">Home</span>}
               </div>
               <div className="nav-item" onClick={() => router.push('/profile')}>
-                <img src="/icons/ProfileIcon2.png" />
+                <img src="/icons/ProfileIcon2.png" alt="Profile" />
                 {sidebarExpanded && <span className="nav-text">Profile</span>}
               </div>
               <div className="nav-item-parent active">
@@ -436,217 +405,207 @@ const handleSignOut = () => {
                   </div>
                 )}
               </div>
-              <div className="nav-item"onClick={() => router.push('/activitystatspage')}>
-                <img src="/icons/ActivityIcon2.png"  />
-                {sidebarExpanded && <span className="nav-text">Activity Stats</span>}
+              <div className="nav-item" onClick={() => router.push('/activitystatspage')}>
+                <img src="/icons/ActivityIcon2.png" alt="Activity" />
+                {sidebarExpanded && <span className="nav-text">Activity <p/>Stats</span>}
               </div>
             </nav>
             
-            {/* Sign Out Button */}
             <button className="nav-item sign-out-button" onClick={handleSignOut}>
               {sidebarExpanded && <span className="nav-text">Sign Out</span>}
             </button>
           </div>
 
-          {/* Main Content */}
           <div className={`main-content ${sidebarExpanded ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
-            <div className="topic-header">
-              <h1 className="topic-title">{title || 'Quiz'}</h1>
-            </div>
+            <div className="content-wrapper">
+              <div className="topic-header">
+                <h1 className="topic-title">{title || 'Quiz'}</h1>
+              </div>
 
-            {/* Question Card */}
-            <div className="question-card">
-              <h2 className="question-title">Question {currentQuestion}</h2>
-              
-              {loading && (
-                <div className="loading-state">
-                  <div className="spinner"></div>
-                  <p>Generating question...</p>
-                </div>
-              )}
-
-              {error && (
-                <div className="error-state">
-                  <p>Failed to generate question: {error}</p>
-                  <button 
-                    className="btn-retry"
-                    onClick={() => generateQuestion(currentQuestion)}
-                  >
-                    Try Again
-                  </button>
-                </div>
-              )}
-
-              {!loading && !error && currentQuestionData && (
-                <>
-                  <div className="question-content">
-                    <p className="question-text">
-                      {currentQuestionData.question}
-                    </p>
-                    
-                    {currentQuestionData.parts && currentQuestionData.parts.length > 0 && (
-                      <div className="equation-list">
-                        {currentQuestionData.parts.map((part, idx) => (
-                          <p key={idx} className="equation">
-                            {part.label} {part.text}
-                          </p>
-                        ))}
-                      </div>
-                    )}
-
-                    {showSolution && currentQuestionData.solution && (
-                      <div className="solution-box">
-                        <h3>Full Solution:</h3>
-                        {currentQuestionData.solution.steps.map((step, idx) => (
-                          <div key={idx} className="solution-step">
-                            <p className="step-title">Step {step.step}: {step.description}</p>
-                            <p className="step-work">{step.work}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {showAnswer && currentQuestionData.solution && (
-                      <div className="answer-box">
-                        <h3>Answer:</h3>
-                        {currentQuestionData.solution.answers.map((ans, idx) => (
-                          <p key={idx}>{ans.part} {ans.answer}</p>
-                        ))}
-                      </div>
-                    )}
+              <div className="question-card">
+                <h2 className="question-title">Question {currentQuestion}</h2>
+                
+                {loading && (
+                  <div className="loading-state">
+                    <div className="spinner"></div>
+                    <p>Generating question...</p>
                   </div>
+                )}
 
-                  <div className="action-buttons">
+                {error && (
+                  <div className="error-state">
+                    <p>Failed to generate question: {error}</p>
                     <button 
-                      className="btn-outline"
-                      onClick={handleShowSolution}
+                      className="btn-retry"
+                      onClick={() => generateQuestion(currentQuestion)}
                     >
-                      {showSolution ? 'Hide Solution' : 'Show Full Solution'}
-                    </button>
-                    <button 
-                      className="btn-primary"
-                      onClick={handleShowAnswer}
-                    >
-                      {showAnswer ? 'Hide Answer' : 'Show Answer'}
+                      Try Again
                     </button>
                   </div>
+                )}
 
-                  {showAnswer && (
-                    <div className="feedback-section">
-                      <p className="feedback-question">Did you get the correct answer?</p>
-                      <div className="feedback-buttons">
-                        <button 
-                          className={`feedback-btn correct ${selectedAnswer === 'correct' ? 'selected' : ''}`}
-                          onClick={handleCorrectAnswer}
-                          disabled={questionStatuses[currentQuestion] && questionStatuses[currentQuestion] !== 'unanswered'}
-                        >
-                          <img src="/icons/tick.svg" alt="tick" className="Quiz-tick" />
-                        </button>
-                        <button 
-                          className={`feedback-btn incorrect ${selectedAnswer === 'incorrect' ? 'selected' : ''}`}
-                          onClick={handleIncorrectAnswer}
-                          disabled={questionStatuses[currentQuestion] && questionStatuses[currentQuestion] !== 'unanswered'}
-                        >
-                          <img src="/icons/cross.svg" alt="cross" className="Quiz-cross" />
-                        </button>
-                      </div>
+                {!loading && !error && currentQuestionData && (
+                  <>
+                    <div className="question-content">
+                      <p className="question-text">
+                        {currentQuestionData.question}
+                      </p>
+                      
+                      {currentQuestionData.parts && currentQuestionData.parts.length > 0 && (
+                        <div className="equation-list">
+                          {currentQuestionData.parts.map((part, idx) => (
+                            <p key={idx} className="equation">
+                              {part.label} {part.text}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+
+                      {showSolution && currentQuestionData.solution && (
+                        <div className="solution-box">
+                          <h3>Full Solution:</h3>
+                          {currentQuestionData.solution.steps.map((step, idx) => (
+                            <div key={idx} className="solution-step">
+                              <p className="step-title">Step {step.step}: {step.description}</p>
+                              <p className="step-work">{step.work}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {showAnswer && currentQuestionData.solution && (
+                        <div className="answer-box">
+                          <h3>Answer:</h3>
+                          {currentQuestionData.solution.answers.map((ans, idx) => (
+                            <p key={idx}>{ans.part} {ans.answer}</p>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
 
-                  <div className="nav-buttons">
-                    <button 
-                      className="btn-back" 
-                      onClick={handlePrevious}
-                      disabled={currentQuestion === 1}
-                      style={{ opacity: currentQuestion === 1 ? 0.3 : 1 }}
-                    >
-                      ← 
-                    </button>
-                    <button className="btn-text" onClick={handleEndSession}>End session</button>
+                    <div className="action-buttons">
+                      <button 
+                        className="btn-outline"
+                        onClick={handleShowSolution}
+                      >
+                        {showSolution ? 'Hide Solution' : 'Show Full Solution'}
+                      </button>
+                      <button 
+                        className="btn-primary"
+                        onClick={handleShowAnswer}
+                      >
+                        {showAnswer ? 'Hide Answer' : 'Show Answer'}
+                      </button>
+                    </div>
 
-                    <button 
-                      className="btn-next" 
-                      onClick={handleNext}
-                    >
-                      Next →
-                    </button>
-                  </div>
-                </>
-              )}
+                    {showAnswer && (
+                      <div className="feedback-section">
+                        <p className="feedback-question">Did you get the correct answer?</p>
+                        <div className="feedback-buttons">
+                          <button 
+                            className={`feedback-btn correct ${selectedAnswer === 'correct' ? 'selected' : ''}`}
+                            onClick={handleCorrectAnswer}
+                            disabled={questionStatuses[currentQuestion] && questionStatuses[currentQuestion] !== 'unanswered'}
+                          >
+                            <img src="/icons/tick.svg" alt="tick" className="Quiz-tick" />
+                          </button>
+                          <button 
+                            className={`feedback-btn incorrect ${selectedAnswer === 'incorrect' ? 'selected' : ''}`}
+                            onClick={handleIncorrectAnswer}
+                            disabled={questionStatuses[currentQuestion] && questionStatuses[currentQuestion] !== 'unanswered'}
+                          >
+                            <img src="/icons/cross.svg" alt="cross" className="Quiz-cross" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="nav-buttons">
+                      <button 
+                        className="btn-back" 
+                        onClick={handlePrevious}
+                        disabled={currentQuestion === 1}
+                        style={{ opacity: currentQuestion === 1 ? 0.3 : 1 }}
+                      >
+                        ← 
+                      </button>
+                      <button className="btn-text" onClick={handleEndSession}>End session</button>
+
+                      <button 
+                        className="btn-next" 
+                        onClick={handleNext}
+                      >
+                        Next →
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Question Progress Sidebar */}
           <div className="progress-sidebar">
-            {questionNumbers.map((questionId) => {
-              const status = questionId === currentQuestion ? 'current' : (questionStatuses[questionId] || 'unanswered')
-              return (
-                <button
-                  key={questionId}
-                  className={`question-indicator ${status}`}
-                  onClick={() => handleQuestionClick(questionId)}
-                >
-                  {status === 'correct' ? (
-                    <span className="status-icon correct">✓</span>
-                  ) : status === 'incorrect' ? (
-                    <span className="status-icon incorrect">✕</span>
-                  ) : status === 'current' ? (
-                    <span className="status-icon current">◯</span>
-                  ) : (
-                    <span className="status-icon unanswered">◯</span>
-                  )}
-                  <span className="question-number">Question {questionId}</span>
-                </button>
-              )
-            })}
+            <h3 className="progress-title">Questions</h3>
+            <div className="progress-list">
+              {questionNumbers.map((questionId) => {
+                const status = questionId === currentQuestion ? 'current' : (questionStatuses[questionId] || 'unanswered')
+                return (
+                  <button
+                    key={questionId}
+                    className={`question-indicator ${status}`}
+                    onClick={() => handleQuestionClick(questionId)}
+                  >
+                    {status === 'correct' ? (
+                      <span className="status-icon correct">✓</span>
+                    ) : status === 'incorrect' ? (
+                      <span className="status-icon incorrect">✕</span>
+                    ) : status === 'current' ? (
+                      <span className="status-icon current">◯</span>
+                    ) : (
+                      <span className="status-icon unanswered">◯</span>
+                    )}
+                    <span className="question-number">Q{questionId}</span>
+                  </button>
+                )
+              })}
+            </div>
           </div>
         </div>
-        {/* Results Modal */}
+
         {showResults && (
-  <ResultsModal
-    score={calculateResults().score}
-    totalQuestions={calculateResults().totalQuestions}
-    correctAnswers={calculateResults().correctAnswers}
-    topic={topic}
-    onClose={async () => {
-      
-      
-      // Reset state after modal closes
-      setQuestions({});
-      setQuestionStatuses({});
-      setMaxQuestion(10);
-      setCurrentQuestion(1);
-      setShowResults(false);
-      router.push('/topicspage');
-    }}
-    onTryAgain={async () => {
-  // (ResultsModal already clears sessionStorage; if not, do it here)
-  // if (topic) sessionStorage.removeItem(`quiz_${topic}`);
-
-  // Reset all state for a fresh start
-  setQuestions({});
-  setQuestionStatuses({});
-  setMaxQuestion(10);
-  setCurrentQuestion(1);
-  setShowSolution(false);
-  setShowAnswer(false);
-  setSelectedAnswer(null);
-  setShowResults(false);
-  setError(null);
-
-  // Kick off a new question for Q1 after state flushes
-  setTimeout(() => {
-    try {
-      generateQuestion(1);
-    } catch (e) {
-      console.error("Failed to re-generate Q1 on Try Again:", e);
-    }
-  }, 0);
-}}
-
-  />
-)}
-
+          <ResultsModal
+            score={calculateResults().score}
+            totalQuestions={calculateResults().totalQuestions}
+            correctAnswers={calculateResults().correctAnswers}
+            topic={topic}
+            onClose={async () => {
+              setQuestions({});
+              setQuestionStatuses({});
+              setMaxQuestion(10);
+              setCurrentQuestion(1);
+              setShowResults(false);
+              router.push('/topicspage');
+            }}
+            onTryAgain={async () => {
+              setQuestions({});
+              setQuestionStatuses({});
+              setMaxQuestion(10);
+              setCurrentQuestion(1);
+              setShowSolution(false);
+              setShowAnswer(false);
+              setSelectedAnswer(null);
+              setShowResults(false);
+              setError(null);
+              setTimeout(() => {
+                try {
+                  generateQuestion(1);
+                } catch (e) {
+                  console.error("Failed to re-generate Q1 on Try Again:", e);
+                }
+              }, 0);
+            }}
+          />
+        )}
       </div>
 
       <style jsx>{`
@@ -669,80 +628,6 @@ const handleSignOut = () => {
           min-height: 100vh;
           display: flex;
           position: relative;
-        }
-
-        /* Loading and Error States */
-        .loading-state {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 60px;
-          gap: 20px;
-        }
-
-        .spinner {
-          width: 48px;
-          height: 48px;
-          border: 4px solid rgba(103, 80, 164, 0.2);
-          border-top-color: rgba(103, 80, 164, 1);
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-
-        .error-state {
-          background: rgba(244, 67, 54, 0.1);
-          border: 2px solid rgba(244, 67, 54, 0.3);
-          border-radius: 12px;
-          padding: 32px;
-          text-align: center;
-        }
-
-        .error-state p {
-          color: rgba(244, 67, 54, 1);
-          font-size: 16px;
-          margin-bottom: 16px;
-        }
-
-        .btn-retry {
-          padding: 12px 24px;
-          background: rgba(244, 67, 54, 1);
-          color: white;
-          border: none;
-          border-radius: 8px;
-          cursor: pointer;
-          font-size: 14px;
-          font-weight: 500;
-          transition: all 0.2s;
-        }
-
-        .btn-retry:hover {
-          background: rgba(234, 57, 44, 1);
-          transform: translateY(-2px);
-        }
-
-        /* Solution Steps */
-        .solution-step {
-          margin-bottom: 16px;
-          padding: 12px;
-          background: rgba(255, 255, 255, 0.5);
-          border-radius: 8px;
-        }
-
-        .step-title {
-          font-weight: 600;
-          color: rgba(103, 80, 164, 1);
-          margin-bottom: 8px;
-        }
-
-        .step-work {
-          font-family: 'Courier New', monospace;
-          color: #333;
-          white-space: pre-wrap;
         }
 
         .sidebar {
@@ -801,40 +686,6 @@ const handleSignOut = () => {
           flex: 1;
         }
 
-        .nav-item {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 16px;
-          border-radius: 100px;
-          cursor: pointer;
-          transition: background-color 0.2s;
-          color: rgba(255, 255, 255, 0.9);
-          font-size: 14px;
-          font-family: Roboto, sans-serif;
-          font-weight: 500;
-          white-space: nowrap;
-        }
-        
-        .sidebar.collapsed .nav-item {
-          justify-content: center;
-          padding: 16px 12px;
-        }
-
-        .nav-item:hover {
-          background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .nav-item.active {
-          background-color: rgba(232, 222, 248, 1);
-          color: rgba(74, 68, 89, 1);
-        }
-
-        .nav-icon {
-          font-size: 20px;
-          flex-shrink: 0;
-        }
-
         .nav-item,
         .nav-item-parent {
           display: flex;
@@ -855,6 +706,20 @@ const handleSignOut = () => {
           padding: 16px;
           flex-direction: row;
         }
+        
+        .sidebar.collapsed .nav-item {
+          justify-content: center;
+          padding: 16px 12px;
+        }
+
+        .nav-item:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item.active {
+          background-color: rgba(232, 222, 248, 1);
+          color: rgba(74, 68, 89, 1);
+        }
 
         .nav-item-parent {
           border-radius: 20px;
@@ -871,10 +736,6 @@ const handleSignOut = () => {
           align-items: center;
           gap: 12px;
           padding: 16px;
-        }
-
-        .nav-item:hover {
-          background-color: rgba(255, 255, 255, 0.1);
         }
 
         .nav-item-parent:not(.active) .nav-item-main:hover {
@@ -951,33 +812,39 @@ const handleSignOut = () => {
 
         .main-content {
           flex: 1;
-          padding: 40px 40px 60px;
+          padding: 50px 40px;
           display: flex;
-          flex-direction: column;
-          align-items: center;
+          justify-content: center;
           transition: all 0.3s ease;
         }
         
         .main-content.sidebar-expanded {
           margin-left: 174px;
-          max-width: calc(100vw - 174px - 300px);
+          margin-right: 280px;
         }
 
         .main-content.sidebar-collapsed {
           margin-left: 80px;
-          max-width: calc(100vw - 80px - 300px);
+          margin-right: 280px;
+        }
+
+        .content-wrapper {
+          width: 100%;
+          max-width: 900px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
         }
 
         .topic-header {
           width: 100%;
-          max-width: 800px;
-          margin-bottom: 24px;
+          margin-bottom: 32px;
         }
 
         .topic-title {
-          font-size: 42px;
-          font-weight: 600;
-          font-family: 'Madimi One', 'Inter', sans-serif;
+          font-size: 48px;
+          font-weight: 400;
+          font-family: 'Madimi One', sans-serif;
           color: rgba(28, 42, 58, 1);
           text-align: center;
           margin: 0;
@@ -985,29 +852,28 @@ const handleSignOut = () => {
 
         .question-card {
           background: white;
-          border-radius: 40px;
-          padding: 60px;
+          border-radius: 32px;
+          padding: 50px;
           width: 100%;
-          max-width: 800px;
           box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
 
         .question-title {
-          font-size: 32px;
+          font-size: 28px;
           font-weight: 600;
           font-family: 'Inter', sans-serif;
-          margin-bottom: 30px;
-          color: #000;
+          margin-bottom: 24px;
+          color: rgba(28, 42, 58, 1);
         }
 
         .question-content {
-          margin-bottom: 40px;
+          margin-bottom: 32px;
         }
 
         .question-text {
           font-size: 18px;
           line-height: 1.6;
-          margin-bottom: 24px;
+          margin-bottom: 20px;
           color: #333;
         }
 
@@ -1015,7 +881,7 @@ const handleSignOut = () => {
           margin-left: 20px;
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 12px;
         }
 
         .equation {
@@ -1029,7 +895,7 @@ const handleSignOut = () => {
           background: rgba(232, 222, 248, 0.3);
           border-left: 4px solid rgba(103, 80, 164, 1);
           padding: 24px;
-          border-radius: 8px;
+          border-radius: 12px;
           margin-top: 24px;
         }
 
@@ -1048,25 +914,40 @@ const handleSignOut = () => {
           margin-bottom: 8px;
           color: #333;
         }
-        
-         .solution-detail {
-          color: #666;
-          font-style: italic;
+
+        .solution-step {
+          margin-bottom: 16px;
+          padding: 12px;
+          background: rgba(255, 255, 255, 0.5);
+          border-radius: 8px;
+        }
+
+        .step-title {
+          font-weight: 600;
+          color: rgba(103, 80, 164, 1);
+          margin-bottom: 8px;
+        }
+
+        .step-work {
+          font-family: 'Courier New', monospace;
+          color: #333;
+          white-space: pre-wrap;
         }
 
         .action-buttons {
           display: flex;
-          gap: 20px;
+          gap: 16px;
           justify-content: center;
-          margin-bottom: 32px;
+          margin-bottom: 24px;
         }
 
         .btn-outline {
-          padding: 14px 32px;
+          padding: 14px 28px;
           font-size: 16px;
           font-weight: 500;
-          border: 2px solid #333;
+          border: 2px solid rgba(103, 80, 164, 1);
           background: white;
+          color: rgba(103, 80, 164, 1);
           border-radius: 50px;
           cursor: pointer;
           transition: all 0.3s;
@@ -1074,7 +955,7 @@ const handleSignOut = () => {
         }
 
         .btn-outline:hover {
-          background: #f5f5f5;
+          background: rgba(232, 222, 248, 0.3);
           transform: translateY(-2px);
         }
 
@@ -1083,7 +964,7 @@ const handleSignOut = () => {
         }
         
         .btn-primary {
-          padding: 14px 32px;
+          padding: 14px 28px;
           font-size: 16px;
           font-weight: 500;
           border: none;
@@ -1102,16 +983,15 @@ const handleSignOut = () => {
         }
 
         .feedback-section {
-          background: white;
-          border-radius: 30px;
-          padding: 32px;
+          background: #f8f7fd;
+          border-radius: 20px;
+          padding: 28px;
           margin-top: 24px;
           margin-bottom: 24px;
           display: flex;
           flex-direction: column;
           align-items: center;
           gap: 20px;
-          border: 2px solid rgba(230, 230, 230, 1);
         }
 
         .feedback-question {
@@ -1140,6 +1020,11 @@ const handleSignOut = () => {
           background: white;
           position: relative;
           padding: 0;
+        }
+
+        .feedback-btn img {
+          width: 28px;
+          height: 28px;
         }
 
         .feedback-btn.correct.selected {
@@ -1174,33 +1059,11 @@ const handleSignOut = () => {
           cursor: not-allowed;
         }
 
-        .feedback-btn:active:not(:disabled) {
-          transform: scale(1.05);
-        }
-
-        .feedback-icon-img {
-          width: 32px;
-          height: 32px;
-          object-fit: contain;
-          transition: all 0.3s;
-        }
-
-        .feedback-btn.selected .feedback-icon-img {
-          filter: brightness(1.2);
-        }
-
-        .feedback-icon {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        
         .nav-buttons {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding-top: 20px;
+          padding-top: 24px;
           border-top: 1px solid #e0e0e0;
         }
 
@@ -1213,6 +1076,7 @@ const handleSignOut = () => {
           cursor: pointer;
           border-radius: 50%;
           transition: background 0.2s;
+          color: #333;
         }
 
         .btn-back:hover:not(:disabled) {
@@ -1229,12 +1093,12 @@ const handleSignOut = () => {
           font-size: 16px;
           text-decoration: underline;
           cursor: pointer;
-          color: #333;
+          color: #666;
           font-family: 'Inter', sans-serif;
         }
 
         .btn-text:hover {
-          color: #000;
+          color: #333;
         }
 
         .btn-next {
@@ -1249,6 +1113,7 @@ const handleSignOut = () => {
           gap: 8px;
           transition: transform 0.2s;
           font-family: 'Inter', sans-serif;
+          color: #333;
         }
 
         .btn-next:hover {
@@ -1256,26 +1121,41 @@ const handleSignOut = () => {
         }
 
         .progress-sidebar {
-          width: 300px;
-          min-width: 300px;
-          padding: 60px 20px;
+          width: 280px;
+          min-width: 280px;
+          padding: 50px 20px;
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 16px;
           position: fixed;
           right: 0;
           top: 0;
           height: 100vh;
           overflow-y: auto;
+          background: rgba(188, 203, 184, 1);
+        }
+
+        .progress-title {
+          font-size: 24px;
+          font-weight: 600;
+          color: rgba(28, 42, 58, 1);
+          margin-bottom: 8px;
+          font-family: 'Inter', sans-serif;
+        }
+
+        .progress-list {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
         }
 
         .question-indicator {
           display: flex;
           align-items: center;
           gap: 12px;
-          padding: 16px 20px;
+          padding: 14px 16px;
           border: none;
-          border-radius: 12px;
+          border-radius: 16px;
           background: white;
           cursor: pointer;
           transition: all 0.2s;
@@ -1286,35 +1166,38 @@ const handleSignOut = () => {
 
         .question-indicator:hover {
           transform: translateX(-4px);
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         .question-indicator.correct {
           background: rgba(200, 230, 201, 1);
+          border: 2px solid rgba(76, 175, 80, 1);
         }
 
         .question-indicator.incorrect {
           background: rgba(255, 205, 210, 1);
+          border: 2px solid rgba(244, 67, 54, 1);
         }
 
         .question-indicator.current {
           background: rgba(232, 234, 246, 1);
           border: 2px solid rgba(103, 80, 164, 1);
+          box-shadow: 0 4px 12px rgba(103, 80, 164, 0.2);
         }
 
         .question-indicator.unanswered {
-          background: rgba(245, 245, 245, 1);
-          opacity: 0.7;
+          background: white;
+          border: 2px solid rgba(220, 220, 220, 1);
         }
 
         .status-icon {
-          width: 28px;
-          height: 28px;
+          width: 32px;
+          height: 32px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 16px;
+          font-size: 18px;
           font-weight: bold;
           flex-shrink: 0;
         }
@@ -1341,21 +1224,74 @@ const handleSignOut = () => {
 
         .question-number {
           color: #333;
+          font-weight: 600;
+        }
+
+        .loading-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 60px;
+          gap: 20px;
+        }
+
+        .spinner {
+          width: 48px;
+          height: 48px;
+          border: 4px solid rgba(103, 80, 164, 0.2);
+          border-top-color: rgba(103, 80, 164, 1);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        .error-state {
+          background: rgba(244, 67, 54, 0.1);
+          border: 2px solid rgba(244, 67, 54, 0.3);
+          border-radius: 12px;
+          padding: 32px;
+          text-align: center;
+        }
+
+        .error-state p {
+          color: rgba(244, 67, 54, 1);
+          font-size: 16px;
+          margin-bottom: 16px;
+        }
+
+        .btn-retry {
+          padding: 12px 24px;
+          background: rgba(244, 67, 54, 1);
+          color: white;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          font-size: 14px;
           font-weight: 500;
+          transition: all 0.2s;
+        }
+
+        .btn-retry:hover {
+          background: rgba(234, 57, 44, 1);
+          transform: translateY(-2px);
         }
 
         @media(max-width: 1400px) {
           .progress-sidebar {
-            width: 250px;
-            min-width: 250px;
+            width: 240px;
+            min-width: 240px;
           }
 
           .main-content.sidebar-expanded {
-            max-width: calc(100vw - 174px - 250px);
+            margin-right: 240px;
           }
 
           .main-content.sidebar-collapsed {
-            max-width: calc(100vw - 80px - 250px);
+            margin-right: 240px;
           }
         }
 
@@ -1365,11 +1301,11 @@ const handleSignOut = () => {
           }
 
           .main-content.sidebar-expanded {
-            max-width: calc(100vw - 174px);
+            margin-right: 0;
           }
 
           .main-content.sidebar-collapsed {
-            max-width: calc(100vw - 80px);
+            margin-right: 0;
           }
         }
 
@@ -1393,17 +1329,19 @@ const handleSignOut = () => {
           .main-content.sidebar-expanded {
             margin-left: 80px;
             padding: 30px 20px;
-            max-width: calc(100vw - 80px);
           }
 
           .main-content.sidebar-collapsed {
             margin-left: 60px;
             padding: 30px 20px;
-            max-width: calc(100vw - 60px);
           }
 
           .question-card {
             padding: 30px;
+          }
+
+          .topic-title {
+            font-size: 36px;
           }
 
           .action-buttons {

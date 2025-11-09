@@ -196,7 +196,7 @@ const PYPQuizPage = () => {
               </div>
               <div className="nav-item" onClick={() => router.push('/activitystatspage')}>
                 <img src="/icons/ActivityIcon2.png" alt="Activity" />
-                {sidebarExpanded && <span className="nav-text">Activity Stats</span>}
+                {sidebarExpanded && <span className="nav-text">Activity <p/>Stats</span>}
               </div>
             </nav>
             

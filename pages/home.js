@@ -1,155 +1,145 @@
-import Head from 'next/head'
-import { useRouter } from 'next/router'
-import Link from 'next/link';
 import React, { useState, useEffect } from 'react';
-
+import { useRouter } from 'next/router';
 
 const HomePage = () => {
-  const router = useRouter()
-  const [sidebarExpanded, setSidebarExpanded] = useState(true)
-  const [userName, setUserName] = useState('')
-  const [statusMessage, setStatusMessage] = useState('Im cooked')
-  const [isEditingName, setIsEditingName] = useState(false)
-  const [isEditingStatus, setIsEditingStatus] = useState(false)
+  const router = useRouter();
+  const [sidebarExpanded, setSidebarExpanded] = useState(true);
+  const [userName, setUserName] = useState('');
+  const [statusMessage, setStatusMessage] = useState('Im cooked');
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isEditingStatus, setIsEditingStatus] = useState(false);
+  
   const handleSignOut = () => {
     localStorage.removeItem('user');
-    router.push('/');  // Redirect to the login page
+    router.push('/');
   };
   
-    useEffect(() => {
-  // Try to load user info from localStorage
-  const storedUser = localStorage.getItem('user');
+  useEffect(() => {
+    // Try to load user info from localStorage
+    const storedUser = localStorage.getItem('user');
 
-  if (storedUser) {
-    try {
-      const user = JSON.parse(storedUser);
-      // Pick whichever field your backend sends back (username or displayName)
-      setUserName(user.displayName || user.username || 'User');
-    } catch (err) {
-      console.error('Failed to parse user info:', err);
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        // Pick whichever field your backend sends back (username or displayName)
+        setUserName(user.displayName || user.username || 'User');
+      } catch (err) {
+        console.error('Failed to parse user info:', err);
+      }
     }
-  }
-}, []);
+  }, []);
 
     
   const toggleSidebar = () => {
-    setSidebarExpanded(!sidebarExpanded)
-  }
+    setSidebarExpanded(!sidebarExpanded);
+  };
 
-   const handleNameSubmit = async () => {
-  setIsEditingName(false);
+  const handleNameSubmit = async () => {
+    setIsEditingName(false);
 
-  const raw = typeof window !== "undefined" ? localStorage.getItem("user") : null;
-  if (!raw) return;
-  const user = JSON.parse(raw);
-  const userId = user?.id;
+    const raw = typeof window !== "undefined" ? localStorage.getItem("user") : null;
+    if (!raw) return;
+    const user = JSON.parse(raw);
+    const userId = user?.id;
 
-  if (!userId) {
-    alert("User ID missing. Please sign in again.");
-    return;
-  }
-
-  try {
-    const res = await fetch("/api/update-displayname", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, displayName: userName }),
-    });
-
-    if (!res.ok) {
-      throw new Error("Failed to update name");
+    if (!userId) {
+      alert("User ID missing. Please sign in again.");
+      return;
     }
 
-    const updated = await res.json();
-    console.log("Display name updated:", updated);
-    alert("Display name updated!");
+    try {
+      const res = await fetch("/api/update-displayname", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, displayName: userName }),
+      });
 
-    // Update localStorage copy of user too:
-    const newUser = { ...user, displayName: userName };
-    localStorage.setItem("user", JSON.stringify(newUser));
+      if (!res.ok) {
+        throw new Error("Failed to update name");
+      }
 
-  } catch (e) {
-    console.error(e);
-    alert("Failed to update display name. Try again.");
-  }
-};
+      const updated = await res.json();
+      console.log("Display name updated:", updated);
+      alert("Display name updated!");
 
+      // Update localStorage copy of user too:
+      const newUser = { ...user, displayName: userName };
+      localStorage.setItem("user", JSON.stringify(newUser));
+
+    } catch (e) {
+      console.error(e);
+      alert("Failed to update display name. Try again.");
+    }
+  };
 
   const handleStatusSubmit = (e) => {
     if (e.key === 'Enter' || e.type === 'blur') {
-      setIsEditingStatus(false)
+      setIsEditingStatus(false);
     }
-  }
+  };
 
   const handleTopicalQuizClick = () => {
-    router.push({
-      pathname: '/topicspage',
-    })
-  }
+    router.push('/topicspage');
+  };
 
   const handlePastYearPaperClick = () => {
-    router.push('/pyp')
-  }
+    router.push('/pyp');
+  };
+
+  const navigate = (path) => {
+    router.push(path);
+  };
 
   return (
     <>
       <div className="home-container">
-        <Head>
-          <title>Home - Quiz App</title>
-        </Head>
-
         <div className="home-page">
-  {/* Sidebar Navigation */}
-  <div className={`sidebar ${sidebarExpanded ? 'expanded' : 'collapsed'}`}>
-    <button className="menu-button" onClick={toggleSidebar}>
-      <div className="menu-icon">{sidebarExpanded ? '✕' : '☰'}</div>
-    </button>
-    <nav className="nav-items">
-      <div className="nav-item active">
-        <img src="/icons/HomeIcon2.png" alt="Home" />
-        {sidebarExpanded && <span className="nav-text">Home</span>}
-      </div>
-      <div className="nav-item" onClick={() => router.push('/profile')}>
-        <img src="/icons/ProfileIcon2.png" alt="Profile" />
-        {sidebarExpanded && <span className="nav-text">Profile</span>}
-      </div>
-      <div className="nav-item-parent">
-        <div className="nav-item-main">
-          <img src="/icons/ContentIcon1.png" alt="Content" />
-          {sidebarExpanded && <span className="nav-text">Content</span>}
-        </div>
-        {sidebarExpanded && (
-          <div className="nav-subitems">
-            <div className="nav-subitem" onClick={() => router.push('/topicspage')}>
-              Topics
-            </div>
-            <div className="nav-subitem" onClick={() => router.push('/pyp')}>
-              PYP
-            </div>
+          {/* Sidebar Navigation */}
+          <div className={`sidebar ${sidebarExpanded ? 'expanded' : 'collapsed'}`}>
+            <button className="menu-button" onClick={toggleSidebar}>
+              <div className="menu-icon">{sidebarExpanded ? '✕' : '☰'}</div>
+            </button>
+            <nav className="nav-items">
+              <div className="nav-item active">
+                <img src="/icons/HomeIcon2.png" alt="Home" />
+                {sidebarExpanded && <span className="nav-text">Home</span>}
+              </div>
+              <div className="nav-item" onClick={() => navigate('/profile')}>
+                <img src="/icons/ProfileIcon2.png" alt="Profile" />
+                {sidebarExpanded && <span className="nav-text">Profile</span>}
+              </div>
+              <div className="nav-item-parent">
+                <div className="nav-item-main">
+                  <img src="/icons/ContentIcon1.png" alt="Content" />
+                  {sidebarExpanded && <span className="nav-text">Content</span>}
+                </div>
+                {sidebarExpanded && (
+                  <div className="nav-subitems">
+                    <div className="nav-subitem" onClick={() => navigate('/topicspage')}>
+                      Topics
+                    </div>
+                    <div className="nav-subitem" onClick={() => navigate('/pyp')}>
+                      PYP
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="nav-item" onClick={() => navigate('/activitystatspage')}>
+                <img src="/icons/ActivityIcon2.png" alt="Activity" />
+                {sidebarExpanded && <span className="nav-text">Activity <p /> Stats</span>}
+              </div>
+            </nav>
+            {/* Always Visible Sign Out Button */}
+            <button className="nav-item sign-out-button" onClick={handleSignOut}>
+              {sidebarExpanded && <span className="nav-text">Sign Out</span>}
+            </button>
           </div>
-        )}
-      </div>
-      <div className="nav-item" onClick={() => router.push('/activitystatspage')}>
-        <img src="/icons/ActivityIcon2.png" alt="Activity" />
-        {sidebarExpanded && <span className="nav-text">Activity <p /> Stats</span>}
-      </div>
-    </nav>
-    {/* Always Visible Sign Out Button */}
-    <button className="nav-item sign-out-button" onClick={handleSignOut}>
-      {sidebarExpanded && <span className="nav-text">Sign Out</span>}
-    </button>
-  </div>
-
-
-
 
           {/* Main Content */}
           <div className={`main-content ${sidebarExpanded ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
             <div className="content-wrapper">
               {/* Welcome Header */}
-            <h1 className="welcome-title">Hi, welcome back {userName || 'Guest'}</h1>
-            
-
+              <h1 className="welcome-title">Hi, welcome back {userName || 'Guest'}</h1>
 
               {/* Recent Quiz Section */}
               <div className="recent-quiz-section">
@@ -168,28 +158,15 @@ const HomePage = () => {
               {/* Quiz Options */}
               <div className="quiz-options">
                 <button className="quiz-option-card" onClick={handleTopicalQuizClick}>
-                  <div className="quiz-icon abcd-icon">
-                    <div className="icon-grid">
-                      <span className="icon-letter orange">A</span>
-                      <span className="icon-letter yellow">C</span>
-                      <span className="icon-letter blue">B</span>
-                      <span className="icon-letter green">✓</span>
-                    </div>
+                  <div className="quiz-icon">
+                    <img src="/answer.png" alt="Topical Quiz" className="quiz-option-image" />
                   </div>
                   <h3 className="option-title">Topical Quiz</h3>
                 </button>
 
                 <button className="quiz-option-card" onClick={handlePastYearPaperClick}>
-                  <div className="quiz-icon paper-icon">
-                    <svg viewBox="0 0 100 100" className="paper-svg">
-                      <rect x="20" y="15" width="60" height="70" fill="white" stroke="#333" strokeWidth="3" rx="4"/>
-                      <line x1="30" y1="30" x2="60" y2="30" stroke="#4CAF50" strokeWidth="3" strokeLinecap="round"/>
-                      <line x1="30" y1="45" x2="70" y2="45" stroke="#333" strokeWidth="2" strokeLinecap="round"/>
-                      <line x1="30" y1="55" x2="70" y2="55" stroke="#333" strokeWidth="2" strokeLinecap="round"/>
-                      <line x1="30" y1="65" x2="55" y2="65" stroke="#333" strokeWidth="2" strokeLinecap="round"/>
-                      <circle cx="75" cy="70" r="18" fill="#FF9800"/>
-                      <path d="M 65 75 L 70 80 L 85 60" stroke="white" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                  <div className="quiz-icon">
+                    <img src="/contract.png" alt="Past Year Paper" className="quiz-option-image" />
                   </div>
                   <h3 className="option-title">Past Year Paper</h3>
                 </button>
@@ -221,38 +198,37 @@ const HomePage = () => {
                     </span>
                   )}
                 </div>
-               <div className="topicspage-name-section">
-  {isEditingName ? (
-    <input
-      type="text"
-      value={userName}
-      onChange={(e) => setUserName(e.target.value)}
-      onKeyDown={async (e) => {
-        if (e.key === "Enter") {
-          await handleNameSubmit();
-        }
-      }}
-      onBlur={handleNameSubmit}
-      className="topicspage-name-input"
-      autoFocus
-      maxLength={30}
-    />
-  ) : (
-    <span 
-      className="topicspage-text12"
-      onClick={() => setIsEditingName(true)}
-    >
-      {userName}
-    </span>
-  )}
-  <img 
-    src="/edit.png" 
-    alt="Edit" 
-    className="topicspage-edit"
-    onClick={() => setIsEditingName(true)}
-  />
-</div>
-
+                <div className="topicspage-name-section">
+                  {isEditingName ? (
+                    <input
+                      type="text"
+                      value={userName}
+                      onChange={(e) => setUserName(e.target.value)}
+                      onKeyDown={async (e) => {
+                        if (e.key === "Enter") {
+                          await handleNameSubmit();
+                        }
+                      }}
+                      onBlur={handleNameSubmit}
+                      className="topicspage-name-input"
+                      autoFocus
+                      maxLength={30}
+                    />
+                  ) : (
+                    <span 
+                      className="topicspage-text12"
+                      onClick={() => setIsEditingName(true)}
+                    >
+                      {userName}
+                    </span>
+                  )}
+                  <img 
+                    src="/edit.png" 
+                    alt="Edit" 
+                    className="topicspage-edit"
+                    onClick={() => setIsEditingName(true)}
+                  />
+                </div>
               </div>
               
               <div className="topicspage-group11">
@@ -606,45 +582,10 @@ const HomePage = () => {
           justify-content: center;
         }
 
-        .icon-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 8px;
+        .quiz-option-image {
           width: 100%;
           height: 100%;
-        }
-
-        .icon-letter {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 32px;
-          font-weight: 700;
-          font-family: 'Inter', sans-serif;
-          border-radius: 12px;
-          color: white;
-        }
-
-        .icon-letter.orange {
-          background-color: #FF9800;
-        }
-
-        .icon-letter.yellow {
-          background-color: #FFC107;
-        }
-
-        .icon-letter.blue {
-          background-color: #2196F3;
-        }
-
-        .icon-letter.green {
-          background-color: #4CAF50;
-          font-size: 36px;
-        }
-
-        .paper-svg {
-          width: 100%;
-          height: 100%;
+          object-fit: contain;
         }
 
         .option-title {
@@ -937,7 +878,7 @@ const HomePage = () => {
         }
       `}</style>
     </>
-  )
-}
+  );
+};
 
-export default HomePage
+export default HomePage;

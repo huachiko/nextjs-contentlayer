@@ -2,8 +2,5 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/home": "pages/home.js",
-  "/activitystatspage": "pages/activitystatspage.js",
-  "/api/activity-stats": "pages/api/activity-stats.js",
   "/profile": "pages/profile.js"
 }

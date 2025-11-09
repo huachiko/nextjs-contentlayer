@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const [name, setName] = useState('Ally lee');
+  const [name, setName] = useState('Ally Lee');
   const [gender, setGender] = useState('F');
   const [email, setEmail] = useState('');
   const [isEditingName, setIsEditingName] = useState(false);
@@ -11,19 +11,165 @@ export default function ProfilePage() {
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
 
   const handleSignOut = () => {
-    localStorage.removeItem('user');
     router.push('/');
   };
 
   const toggleSidebar = () => setSidebarExpanded(!sidebarExpanded);
 
+  const navigate = (path) => {
+    router.push(path);
+  };
+
   return (
     <>
+      <div className="container">
+        <aside className={`sidebar ${sidebarExpanded ? 'expanded' : 'collapsed'}`}>
+          <button className="menu-button" onClick={toggleSidebar} aria-label="Toggle sidebar">
+            <div className="menu-icon">{sidebarExpanded ? '✕' : '☰'}</div>
+          </button>
+          
+          <nav className="nav-items">
+            <div className="nav-item" onClick={() => navigate('/home')}>
+              <img src="/icons/HomeIcon2.png" alt="Home" />
+              {sidebarExpanded && <span className="nav-text">Home</span>}
+            </div>
+
+            <div className="nav-item active" onClick={() => navigate('/profile')}>
+              <img src="/icons/ProfileIcon2.png" alt="Profile" />
+              {sidebarExpanded && <span className="nav-text">Profile</span>}
+            </div>
+
+            <div className="nav-item-parent">
+              <div className="nav-item-main">
+                <img src="/icons/ContentIcon1.png" alt="Content" />
+                {sidebarExpanded && <span className="nav-text">Content</span>}
+              </div>
+              {sidebarExpanded && (
+                <div className="nav-subitems">
+                  <div className="nav-subitem" onClick={() => navigate('/topicspage')}>
+                    Topics
+                  </div>
+                  <div className="nav-subitem" onClick={() => navigate('/pyp')}>
+                    PYP
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="nav-item" onClick={() => navigate('/activitystatspage')}>
+              <img src="/icons/ActivityIcon2.png" alt="Activity" />
+              {sidebarExpanded && <span className="nav-text">Activity <p/>Stats</span>}
+            </div>
+          </nav>
+
+          <button className="nav-item sign-out-button" onClick={handleSignOut}>
+            {sidebarExpanded && <span className="nav-text">Sign Out</span>}
+            {!sidebarExpanded && <span>⎋</span>}
+          </button>
+        </aside>
+
+        <main className={`main-content ${sidebarExpanded ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
+          <div className="profile-card">
+            <div className="avatar-container">
+              <div className="avatar">
+                <img 
+                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=Ally&backgroundColor=ffd700,ff6347&hairColor=4a5fa5" 
+                  alt="Profile Avatar"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              </div>
+            </div>
+
+            <div className="field">
+              {isEditingName ? (
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onBlur={() => setIsEditingName(false)}
+                  autoFocus
+                />
+              ) : (
+                <span className="field-text">{name}</span>
+              )}
+              <svg
+                className="edit-icon"
+                onClick={() => setIsEditingName(true)}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </div>
+
+            <div className="field">
+              <div className="field-content">
+                <span className="field-text" style={{ marginRight: '8px' }}>Gender:</span>
+                <div className="gender-buttons">
+                  <button
+                    className={`gender-btn ${gender === 'F' ? 'active' : ''}`}
+                    onClick={() => setGender('F')}
+                  >
+                    F
+                  </button>
+                  <span className="gender-separator">/</span>
+                  <button
+                    className={`gender-btn ${gender === 'M' ? 'active' : ''}`}
+                    onClick={() => setGender('M')}
+                  >
+                    M
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="field">
+              {isEditingEmail ? (
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => setIsEditingEmail(false)}
+                  placeholder="Enter email"
+                  autoFocus
+                />
+              ) : (
+                <span className="field-text" style={{ color: email ? '#1a1a1a' : '#666' }}>
+                  {email || 'Add email'}
+                </span>
+              )}
+              <svg
+                className="edit-icon"
+                onClick={() => setIsEditingEmail(true)}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </div>
+
+            <div className="field" style={{ cursor: 'pointer' }} onClick={() => navigate('/change-password')}>
+              <span className="field-text">Change Password</span>
+              <svg
+                className="edit-icon"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+        </main>
+      </div>
+
       <style jsx>{`
         .container {
           display: flex;
           min-height: 100vh;
-          background-color: #d4dcd0;
+          background-color: #bccbb8;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
         }
 
@@ -83,24 +229,30 @@ export default function ProfilePage() {
           flex: 1;
         }
 
-        .nav-item {
+        .nav-item,
+        .nav-item-parent {
           display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 16px;
-          color: rgba(255, 255, 255, 0.9);
-          text-decoration: none;
+          flex-direction: column;
           border-radius: 100px;
-          font-size: 14px;
-          transition: background-color 0.2s;
           cursor: pointer;
+          transition: background-color 0.2s;
+          color: rgba(255, 255, 255, 0.9);
+          font-size: 14px;
           font-family: Roboto, sans-serif;
           font-weight: 500;
           white-space: nowrap;
         }
 
-        .nav-item:hover {
-          background-color: rgba(255, 255, 255, 0.1);
+        .nav-item {
+          align-items: center;
+          gap: 12px;
+          padding: 16px;
+          flex-direction: row;
+        }
+
+        .nav-item-parent {
+          border-radius: 20px;
+          padding: 0;
         }
 
         .nav-item.active {
@@ -108,12 +260,60 @@ export default function ProfilePage() {
           color: rgba(74, 68, 89, 1);
         }
 
+        .nav-item-parent.active {
+          background-color: rgba(232, 222, 248, 1);
+          color: rgba(74, 68, 89, 1);
+        }
+
+        .nav-item-main {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 16px;
+          color: rgba(255, 255, 255, 0.9);
+        }
+
         .sidebar.collapsed .nav-item {
           justify-content: center;
           padding: 16px 12px;
         }
 
-        .icon {
+        .nav-item:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item-parent:not(.active) .nav-item-main:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+          border-radius: 20px;
+        }
+
+        .nav-subitems {
+          display: flex;
+          flex-direction: column;
+          padding: 0 16px 12px 16px;
+          gap: 4px;
+        }
+
+        .nav-subitem {
+          padding: 10px 16px;
+          font-size: 13px;
+          border-radius: 12px;
+          cursor: pointer;
+          transition: background-color 0.2s;
+          color: rgba(74, 68, 89, 0.8);
+        }
+
+        .nav-subitem:hover {
+          background-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .nav-subitem.active-sub {
+          background-color: rgba(103, 80, 164, 0.2);
+          color: rgba(74, 68, 89, 1);
+          font-weight: 600;
+        }
+
+        .nav-item img {
           width: 24px;
           height: 24px;
           flex-shrink: 0;
@@ -160,8 +360,11 @@ export default function ProfilePage() {
           align-items: center;
           justify-content: center;
           padding: 40px;
-          margin-left: 174px;
           transition: all 0.3s ease;
+        }
+
+        .main-content.sidebar-expanded {
+          margin-left: 174px;
         }
 
         .main-content.sidebar-collapsed {
@@ -174,6 +377,7 @@ export default function ProfilePage() {
           background-color: #c5d4be;
           border-radius: 48px;
           padding: 60px 50px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         .avatar-container {
@@ -187,6 +391,7 @@ export default function ProfilePage() {
           height: 180px;
           border-radius: 50%;
           overflow: hidden;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
         .field {
@@ -197,6 +402,11 @@ export default function ProfilePage() {
           display: flex;
           align-items: center;
           justify-content: space-between;
+          transition: all 0.2s;
+        }
+
+        .field:hover {
+          background-color: #d0dccb;
         }
 
         .field-content {
@@ -221,12 +431,23 @@ export default function ProfilePage() {
           flex: 1;
         }
 
+        .field input::placeholder {
+          color: #666;
+          font-weight: 400;
+        }
+
         .edit-icon {
           width: 22px;
           height: 22px;
           cursor: pointer;
           margin-left: 15px;
           color: #4a5a45;
+          transition: all 0.2s;
+        }
+
+        .edit-icon:hover {
+          color: #2d3a2a;
+          transform: scale(1.1);
         }
 
         .gender-buttons {
@@ -243,7 +464,12 @@ export default function ProfilePage() {
           padding: 4px 12px;
           cursor: pointer;
           color: #666;
-          transition: color 0.2s;
+          transition: all 0.2s;
+          border-radius: 8px;
+        }
+
+        .gender-btn:hover {
+          background: rgba(16, 185, 129, 0.1);
         }
 
         .gender-btn.active {
@@ -256,7 +482,14 @@ export default function ProfilePage() {
           color: #1a1a1a;
         }
 
-        @media(max-width: 768px) {
+        .icon-placeholder {
+          width: 24px;
+          height: 24px;
+          background: rgba(255, 255, 255, 0.3);
+          border-radius: 4px;
+        }
+
+        @media (max-width: 768px) {
           .sidebar {
             width: 80px;
             min-width: 80px;
@@ -273,156 +506,35 @@ export default function ProfilePage() {
             display: none;
           }
 
-          .main-content {
+          .main-content.sidebar-expanded {
             margin-left: 80px;
             padding: 24px;
           }
 
           .main-content.sidebar-collapsed {
             margin-left: 60px;
+            padding: 24px;
+          }
+
+          .profile-card {
+            padding: 40px 30px;
+          }
+
+          .avatar {
+            width: 140px;
+            height: 140px;
+          }
+
+          .field {
+            padding: 14px 24px;
+          }
+
+          .field-text,
+          .field input {
+            font-size: 18px;
           }
         }
       `}</style>
-
-      <div className="container">
-        <aside className={`sidebar ${sidebarExpanded ? 'expanded' : 'collapsed'}`}>
-          <button className="menu-button" onClick={toggleSidebar}>
-            <div className="menu-icon">{sidebarExpanded ? '✕' : '☰'}</div>
-          </button>
-          
-          <nav className="nav-items">
-            <div className="nav-item" onClick={() => router.push('/home')}>
-              <svg className="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-              {sidebarExpanded && <span className="nav-text">Home</span>}
-            </div>
-            
-            <div className="nav-item active" onClick={() => router.push('/profile')}>
-              <svg className="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              {sidebarExpanded && <span className="nav-text">Profile</span>}
-            </div>
-            
-            <div className="nav-item" onClick={() => router.push('/topicspage')}>
-              <svg className="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              {sidebarExpanded && <span className="nav-text">Content</span>}
-            </div>
-            
-            <div className="nav-item" onClick={() => router.push('/activitystatspage')}>
-              <svg className="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              {sidebarExpanded && <span className="nav-text">Activity Stats</span>}
-            </div>
-          </nav>
-
-          <button className="nav-item sign-out-button" onClick={handleSignOut}>
-            {sidebarExpanded && <span className="nav-text">Sign Out</span>}
-          </button>
-        </aside>
-
-        <main className={`main-content ${sidebarExpanded ? '' : 'sidebar-collapsed'}`}>
-          <div className="profile-card">
-            <div className="avatar-container">
-              <div className="avatar">
-                <img 
-                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=Ally&backgroundColor=ffd700,ff6347&hairColor=4a5fa5" 
-                  alt="Profile Avatar"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-              </div>
-            </div>
-
-            {/* Name Field */}
-            <div className="field">
-              {isEditingName ? (
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  onBlur={() => setIsEditingName(false)}
-                  autoFocus
-                />
-              ) : (
-                <span className="field-text">{name}</span>
-              )}
-              <svg
-                className="edit-icon"
-                onClick={() => setIsEditingName(true)}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            </div>
-
-            {/* Gender Field */}
-            <div className="field">
-              <div className="field-content">
-                <span className="field-text" style={{ marginRight: '8px' }}>Gender :</span>
-                <div className="gender-buttons">
-                  <button
-                    className={`gender-btn ${gender === 'F' ? 'active' : ''}`}
-                    onClick={() => setGender('F')}
-                  >
-                    F
-                  </button>
-                  <span className="gender-separator">/</span>
-                  <button
-                    className={`gender-btn ${gender === 'M' ? 'active' : ''}`}
-                    onClick={() => setGender('M')}
-                  >
-                    M
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Email Field */}
-            <div className="field">
-              {isEditingEmail ? (
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onBlur={() => setIsEditingEmail(false)}
-                  placeholder="Enter email"
-                  autoFocus
-                />
-              ) : (
-                <span className="field-text">{email || 'Email'}</span>
-              )}
-              <svg
-                className="edit-icon"
-                onClick={() => setIsEditingEmail(true)}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            </div>
-
-            {/* Change Password Button */}
-            <div className="field" style={{ cursor: 'pointer' }}>
-              <span className="field-text">Change Password</span>
-              <svg
-                className="edit-icon"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            </div>
-          </div>
-        </main>
-      </div>
     </>
   );
 }
