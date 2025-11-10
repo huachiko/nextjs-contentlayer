@@ -16,10 +16,8 @@ const PYPQuizPage = () => {
   const [sidebarExpanded, setSidebarExpanded] = useState(true)
   const [questionStatuses, setQuestionStatuses] = useState({})
   const [showResults, setShowResults] = useState(false)
-  const [generatedSolution, setGeneratedSolution] = useState(null)
-  const [isLoadingSolution, setIsLoadingSolution] = useState(false)
 
-  // get current question data from question bank
+  // get current question data from pyp_questions
   const currentQuestionData = pyp_questions[currentQuestion - 1]
   
   const toggleSidebar = () => {
@@ -31,42 +29,8 @@ const PYPQuizPage = () => {
     router.push('/');
   };
 
-  // function to generate solution using API
-  const generateSolution = async () => {
-    setIsLoadingSolution(true)
-    try {
-      const response = await fetch('/api/pyp-generate-solution', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          question: currentQuestionData.question,
-          answer: currentQuestionData.answer
-        }),
-      })
-
-      const data = await response.json()
-      setGeneratedSolution(data.solution || 'Solution could not be generated.')
-    } catch (error) {
-      console.error('Error generating solution:', error)
-      setGeneratedSolution('Error generating solution. Please try again.')
-    } finally {
-      setIsLoadingSolution(false)
-    }
-  }
-
-  const handleShowSolution = async () => {
-    if (!showSolution) {
-      // Only generate if we haven't already
-      if (!generatedSolution) {
-        await generateSolution()
-      }
-      setShowSolution(true)
-      setShowAnswer(true)
-    } else {
-      setShowSolution(false)
-    }
+  const handleShowSolution = () => {
+    setShowSolution(!showSolution)
   }
 
   const handleShowAnswer = () => {
@@ -118,7 +82,6 @@ const PYPQuizPage = () => {
       setShowSolution(false)
       setShowAnswer(false)
       setSelectedAnswer(null)
-      setGeneratedSolution(null)
     }
   }
 
@@ -128,7 +91,6 @@ const PYPQuizPage = () => {
       setShowSolution(false)
       setShowAnswer(false)
       setSelectedAnswer(null)
-      setGeneratedSolution(null)
     }
   }
 
@@ -137,24 +99,26 @@ const PYPQuizPage = () => {
     setShowSolution(false)
     setShowAnswer(false)
     setSelectedAnswer(null)
-    setGeneratedSolution(null)
   }
 
   const questionNumbers = Array.from({ length: totalQuestions }, (_, i) => i + 1)
 
-  // Format question text with proper line breaks
-  const formatQuestionText = (text) => {
-    return text.split('\n').map((line, index) => (
-      <p key={index} className="question-text-line">{line}</p>
-    ))
-  }
-
-  // Format answer text with proper line breaks
-  const formatAnswerText = (text) => {
+  // format questions and answers with proper line breaks
+  const formatText = (text) => {
     return text.split('\n').map((line, index) => (
       <p key={index} style={{ marginBottom: '8px' }}>{line}</p>
     ))
   }
+
+  // format solution text with proper line breaks
+  const formatSolutionText = (text) => {
+  return text.split('\n').map((line, index) => {
+    if (line.trim() === '') {
+      return <hr key={index} style={{ margin: '16px 0', border: 'none', borderTop: '1px solid #ccc' }} />; // creates horizontal line break
+    }
+    return <p key={index} style={{ marginBottom: '8px' }}>{line}</p>;
+  });
+}
 
   return (
     <>
@@ -225,38 +189,31 @@ const PYPQuizPage = () => {
               
               <div className="question-content">
                 <div className="question-text">
-                  {formatQuestionText(currentQuestionData.question)}
+                  {formatText(currentQuestionData.question)}
                 </div>
-
-                {/* Solution Display */}
-                {showSolution && (
-                  <div className="solution-box">
-                    <h3>Full Solution:</h3>
-                    {isLoadingSolution ? (
-                      <div className="loading-spinner">Generating solution...</div>
-                    ) : (
-                      <div className="solution-detail">
-                        {generatedSolution || 'Solution not available.'}
-                      </div>
-                    )}
-                  </div>
-                )}
 
                 {/* Answer Display */}
                 {showAnswer && (
                   <div className="answer-box">
                     <h3>Answer:</h3>
-                    {formatAnswerText(currentQuestionData.answer)}
+                    {formatText(currentQuestionData.answer)}
                   </div>
                 )}
               </div>
+
+                {/* Solution Display */}
+                {showSolution && (
+                  <div className="solution-box">
+                    <h3>Full Solution:</h3>
+                    {formatSolutionText(currentQuestionData.solution)}
+                  </div>
+                )}
 
               {/* Action Buttons */}
               <div className="action-buttons">
                 <button 
                   className="btn-outline"
                   onClick={handleShowSolution}
-                  disabled={isLoadingSolution}
                 >
                   {showSolution ? 'Hide Solution' : 'Show Full Solution'}
                 </button>
@@ -666,6 +623,7 @@ const PYPQuizPage = () => {
           padding: 24px;
           border-radius: 8px;
           margin-top: 24px;
+          margin-bottom: 10px;
         }
 
         .solution-box h3,
