@@ -1,134 +1,279 @@
-// Function to convert LaTeX to plain text
+// convert LaTeX to plain text
 const latexToPlainText = (text) => {
   if (!text) return '';
   
   return text
-    // Remove dollar signs first
-    .replace(/\$/g, '')
-    // Fractions: \frac{a}{b} -> (a/b)
-    .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1/$2)')
-    // Square roots: \sqrt{x} -> √(x)
-    .replace(/\\sqrt\{([^}]+)\}/g, '√($1)')
-    // Superscripts: x^2 or x^{2} -> x²
-    .replace(/\^(\d)/g, (match, p1) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[p1] || `^${p1}`)
-    .replace(/\^\{([^}]+)\}/g, '^($1)')
-    .replace(/\^-/g, '⁻')
-    // Subscripts: x_2 -> x₂
-    .replace(/_(\d)/g, (match, p1) => '₀₁₂₃₄₅₆₇₈₉'[p1] || `_${p1}`)
-    .replace(/_{([^}]+)}/g, '_($1)')
-    // Greek letters
-    .replace(/\\pi/g, 'π')
-    .replace(/\\theta/g, 'θ')
-    .replace(/\\alpha/g, 'α')
-    .replace(/\\beta/g, 'β')
-    .replace(/\\gamma/g, 'γ')
-    .replace(/\\delta/g, 'δ')
-    // Math operators
-    .replace(/\\times/g, '×')
-    .replace(/\\div/g, '÷')
-    .replace(/\\pm/g, '±')
-    .replace(/\\leq/g, '≤')
-    .replace(/\\geq/g, '≥')
-    .replace(/\\neq/g, '≠')
-    .replace(/\\approx/g, '≈')
-    // Trigonometric functions
-    .replace(/\\sin/g, 'sin')
-    .replace(/\\cos/g, 'cos')
-    .replace(/\\tan/g, 'tan')
-    .replace(/\\sec/g, 'sec')
-    .replace(/\\cot/g, 'cot')
-    .replace(/\\csc/g, 'csc')
-    // Logarithms
-    .replace(/\\log_\{?(\w+)\}?\s*\(?([^)]+)\)?/g, 'log_$1($2)')
-    .replace(/\\log/g, 'log')
-    .replace(/\\ln/g, 'ln')
-    // Exponential
-    .replace(/\\exp/g, 'exp')
-    .replace(/e\^\{([^}]+)\}/g, 'e^($1)')
-    // Derivatives and integrals
-    .replace(/\\frac\{d\}\{dx\}/g, 'd/dx')
-    .replace(/\\frac\{dr\}\{dt\}/g, 'dr/dt')
-    .replace(/\\int/g, '∫')
-    .replace(/\\mathrm\{d\}/g, 'd')
-    // Text commands
-    .replace(/\\text\{([^}]+)\}/g, '$1')
-    .replace(/\\mathrm\{([^}]+)\}/g, '$1')
-    // Degree symbol
-    .replace(/\\degree/g, '°')
-    // Parentheses
-    .replace(/\\left\(/g, '(')
-    .replace(/\\right\)/g, ')')
-    .replace(/\\left\[/g, '[')
-    .replace(/\\right\]/g, ']')
-    // Commas with proper spacing
-    .replace(/\\,/g, ' ')
-    // Clean up extra spaces
-    .replace(/\s+/g, ' ')
-    .trim();
+    .replace(/\\sqrt\{([^}]+)\}/g, '√($1)') // square root
+    .replace(/\\pi/g, 'π') // pi (3.14)
+    .replace(/\\alpha/g, 'α') // alpha
+    .replace(/\\times/g, '×') // multiplication
+    .replace(/\\pm/g, '±') // plus-minus
+    .replace(/\\leq/g, '≤') // less than and equal to
+    .replace(/\\approx/g, '≈') // approximately
+    .replace(/\\int/g, '∫') // integral
+    .replace(/[^\S\n]+/g, ' ') // remove extra spaces
 }
 
 const pyp_questions_raw = [
     {
-        question: "Find the value of the constant $c$ such that the line $y=2x+c$ is a tangent to the curve $y=x^2+3x+1$.",
-        answer: "$c=\\frac{3}{4}$",
+        question: `Find the value of the constant c such that the line y = 2x + c is a tangent to the curve y = x² + 3x + 1.`,
+        answer: `c = 3/4`,
+        solution: `y = 2x + c --(1) 
+        y = x² + 3x + 1 --(2)
+        
+        Substitue (1) into (2),
+        2x + c = x² + 3x + 1
+        0 = x² + x + 1 - c
+        
+        b² - 4ac = (1)² - 4(1)(1-c) = -3 + 4c
+        
+        Since line is tangent to curve,
+        b² - 4ac = 0
+        -3 + 4c = 0
+        4c = 3
+        c = 3/4`,
     },
     {
-        question: "Express $\\frac{18+11x-2x^2}{(x-1)(x+2)^2}$ in partial fractions.",
-        answer: "$\\frac{3}{x-1}-\\frac{5}{x+2}+\\frac{4}{(x+2)^2}$",
+        question: `Express (18 + 11x - 2x²)/(x - 1)(x + 2)² in partial fractions.`,
+        answer: `3/(x - 1) - 5/(x + 2) + 4/(x + 2)²`,
+        solution: `(18 + 11x - 2x²)/(x - 1)(x + 2)² = A/(x - 1) + B/(x + 2) + C/(x + 2)² = (A(x+ 2)² + B(x - 1)(x + 2) + C(x - 1))/(x - 1)(x + 2)²
+        18 + 11x - 2x² = A(x + 2)² + B(x - 1)(x + 2) + C(x - 1)
+        
+        Let x = -2,
+        18 + 11(-2) - 2(-2)² = A(0) + B(-3)(0) + C(-3)
+        -12 = 0 + 0 -3C
+        -12 = 3 C
+        C = 4
+        18 + 11x - 2x² = A(x + 2)² + B(x - 1)(x + 2) + 4(x - 1)
+        
+        Let x = 1,
+        18 + 11(1) - 2(1)² = A(3)² + B(0)(3) + 4(0)
+        27 = A(9) + 0 + 0
+        27 = 9(A)
+        A = 3
+        18 + 11x - 2x² = 3(x + 2)² + B(x - 1)(x + 2) + 4(x - 1)
+        
+        Let x = 0,
+        18 + 0 - 0 = 3(2)² + B(-1)(2) + 4 (-1)
+        18 = 12 - 2B - 4
+        2B = 12 - 4 - 18 = -10
+        B = -5
+        
+        (18 + 11x - 2x²)/(x - 1)(x + 2)² = 3/(x - 1) - 5(x + 2) + 4/(x + 2)²`,
     },
     {
-        question: "a) Find $\\frac{d}{dx}(xe^{-2x})$.\n b) Hence find $\\int xe^{-2x}\,\\mathrm{d}x$.",
-        answer: "a) $-2xe^{-2x}+e^{-2x}$\n b) $-\\frac{1}{2}xe^{-2x}-\\frac{1}{4}e^{-2x}+c$",
+        question: `a) Find d/dx(xe⁻²ˣ).
+        b) Hence find \\int xe⁻²ˣ dx.`,
+        answer: `a) -2xe⁻²ˣ + e⁻²ˣ
+        b) -1/2(xe⁻²ˣ) - 1/4(e⁻²ˣ) + c`,
+        solution: `a) u = x
+        du/dx = 1
+        v = e⁻²ˣ
+        dv/dx = -2e⁻²ˣ
+
+        d/dx(xe⁻²ˣ) = x(-2e⁻²ˣ)+(e⁻²ˣ)(1) = -2xe⁻²ˣ + e⁻²ˣ
+        
+        b) From (a), d/dx(xe⁻²ˣ) = -2xe⁻²ˣ + e⁻²ˣ
+        \\int -2xe⁻²ˣ + e⁻²ˣ dx = xe⁻²ˣ
+        \\int -2xe⁻²ˣ dx + \\int e⁻²ˣ dx = xe⁻²ˣ
+        \\int -2xe⁻²ˣ dx = xe⁻²ˣ - \\int e⁻²ˣ dx
+        \\int -2xe⁻²ˣ = xe⁻²ˣ - (e⁻²ˣ)/-2
+        -2\\int xe⁻²ˣ dx = xe⁻²ˣ + 1/2(e⁻²ˣ)
+        \\int xe⁻²ˣ dx = -1/2(xe⁻²ˣ + 1/2(e⁻²ˣ)) = -1/2xe⁻²ˣ - 1/4e⁻²ˣ + c`,
     },
     {
-        question: "Solve the equation $\\frac{\\cos x + 4\\sin x}{2\\cos x + \\sin x} = \\cot x$ for $-\\frac{\\pi}{2} \\leq x \\leq \\frac{\\pi}{2}$.",
-        answer: "0.615, $-0.615$",
+        question: `Solve the equation (cosx + 4sinx)/(2cosx + sinx) = cotx for -\\pi/2 \\leq x \\leq \\pi/2.`,
+        answer: `0.615, -0.615`,
+        solution: `(cosx + 4sinx)/(2cosx + sinx) = cotx
+        (cosx + 4sinx)/(2cosx + sinx) = cosx/sinx
+        sinx(cosx + 4sinx) = cosx(2cosx + sinx)
+        sinx(cosx) + 4sin²x = 2cos²x + sinx(cosx)
+        4sin²x = 2cos²x
+        2sin²x = cos²x
+        (2sin²x)/cos²x = 1
+        2tan²x = 1
+        tan²x = 1/2
+        tanx = \\pm\\sqrt{1/2}
+        
+        Since -\\pi/2 \\leq x \\leq \\pi/2, only 1st and 4th quadrant
+        basic angle \\alpha = tan⁻¹\\sqrt{1/2} = 0.61548
+        x = 0.61548, 2\\pi - 0.61548 = 0.61548, 5.6677 (NA), 5.6677 - 2\\pi 
+        x = 0.61548, -0.61547 \\approx 0.615, -0.615`,
     },
     {
-        question: "The function f is given by f$(x) = \\frac{ax^2}{x-a}$, for $x>a$, where $a$ is a positive constant.\n a) Find f’$(x)$.\n The function g, defined for $x>a$, has the property that g’$(x) = (x-a)^2$f’$(x)$. g decreases for $a<x<8$.\n b) Find the value of $a$.",
-        answer: "a) $\\frac{ax^2-2a^2x}{(x-a)^2}$\n b) $a=4$",
+        question: `The function f is given by f(x) = (ax²)/(x - a), for x > a, where a is a positive constant.
+        a) Find f’(x).
+        The function g, defined for x > a, has the property that g’(x) = (x-a)²f’(x). g decreases for a < x < 8.
+        b) Find the value of a.`,
+        answer: `a) (ax² - 2a²ˣ)/(x - a)²
+        b) a = 4`,
+        solution: `a) u = ax²
+        du/dx = 2ax
+        v = x - a
+        dv/dx = 1
+        
+        f'(x) = ((x - a)(2ax) - (ax²)(1))/(x - a)² = (2ax² - 2a²x - ax²)/(x - a)²
+        x = (ax² - 2a²ˣ)/(x - a)²
+        
+        b) g'(x) = (x - a)²f'(x) = (x - a)²[(ax² - 2a²ˣ)/(x - a)²]
+        For decreasing function, g'(x) < 0
+        ax² - 2 a²x < 0
+        ax(x - 2a) < 0
+        x(x - 2a) < 0/a
+        x(x - 2a) < 0
+        
+        0 < x < 2a
+        
+        Since a > 0 and x > a,
+        a < x < 2a
+        
+        Comparing with a < x < 8,
+        2a = 8
+        a = 4`,
     },
     {
-        question: "Find the set of values of the constant $k$ for which the curve $y=kx^2+4x+k-3$ lies completely below the $x$-axis.",
-        answer: "$k<-1$",
+        question: `Find the set of values of the constant k for which the curve y = kx² + 4x + k - 3 lies completely below the x-axis.`,
+        answer: `k < -1`,
+        solution: `For the curve to lie completely below x-axis, curve is maximum curve
+        k < 0 and b² - 4ac < 0
+        
+        b² - 4ac = 4² - 4(k)(k - 3) = 16 - 4k(k - 3) = -4k² + 12k + 16
+        
+        b² - 4ac < 0
+        -4k² + 12k + 16 < 0
+        -4(k² - 3k - 4) < 0
+        k² - 3k - 4 > 0/(-4)
+        k² - 3k - 4 > 0
+        (k + 1)(k - 4) > 0
+        
+        k < -1 or k > 4
+        To satisfy k < 0, k < -1`,
     },
     {
-        question: "The line $y-2x=12$ intersects the curve $x^2-xy+y^2=63$ at two points. Find the coordinates of these two points.",
-        answer: "$(-3,\,6),\,(-9,\,-6)$",
+        question: `The line y - 2x = 12 intersects the curve x² - xy + y² = 63 at two points. Find the coordinates of these two points.`,
+        answer: `(-3, 6), (-9, -6)`,
+        solution: `y - 2x = 12
+        y = 2x + 12 --(1)
+        x² - xy + y² = 63 --(2)
+        
+        Substitute (1) into (2),
+        x² - x(2x + 12) + (2x + 12)² = 63
+        x² - 2x² - 12x + (2x)² + 2(2x)(12) + (12)² = 63
+        x² - 2x² - 12x + 4x² + 48x + 144 = 63
+        3x² + 36x + 144 = 63
+        3x² + 36x + 81 = 0
+        x² + 12x + 27 = 0
+        (x + 3)(x + 9) = 0
+        x + 3 = 0 or x + 9 = 0
+        x = -3 or x = -9
+        
+        Substitute x = -3 into (1),
+        y = 2(-3) + 12 = 6
+        (-3, 6)
+        
+        Substitute x = -9 into (1),
+        y = 2(-9) + 12 = -6
+        (-9, -6)`,
     },
     {
-        question: "A circle, with centre $C$, has equation $x^2+y^2+10x-24y=0$.\n a) Find the coordinates of $C$ and the radius of the circle.\n b) Find the coordinates of the points at which the circle intersects the $y$-axis.\n The point $X$ is on the line which passes through $C$ and the origin $O$. It is given that the distance $CX$ is three times the distance $OC$.\n c) Find the coordinates of the possible positions of $X$.",
-        answer: "a) centre: $(-5,\,12)$ and radius = 13\n b) $(0,\,24),\,(0,\,0)$\n c) $(-20,\,48),\, (10,\,-24)$",
+        question: `A circle, with centre C, has equation x² + y² + 10x - 24y = 0.
+        a) Find the coordinates of C and the radius of the circle.
+        b) Find the coordinates of the points at which the circle intersects the y-axis.`,
+        answer: `a) centre: (-5, 12) and radius = 13
+        b) (0, 24), (0, 0)`,
+        solution: `a) x² + y² + 10x - 24y = 0
+        2g = 10, 2f = -24, c = 0
+        g = 5, f = -12
+        Centre: (-5, 12)
+        Radius = \\sqrt{g² + f² - c} = \\sqrt{5² + (-12)² - 0} = 13 units
+        
+        b) (x + 5)² + (y - 12)² = 13²
+        Let x = 0,
+        5² + (y - 12)² = 169
+        25 + (y - 12)² = 169
+        (y - 12)² = 169 - 25
+        (y - 12)² = 144
+        y - 12 = \\pm\\sqrt{144}
+        y - 12 = 12 or -12
+        y = 24 or 0
+        (0, 24), (0, 0)`,
     },
     {
-        question: "A circular patch of water of negligible thickness is expanding on a thin piece of paper. At time $t$ seconds the rate of change of the radius, $r$ cm, of the patch is given by $\\frac{dr}{dt} = \\frac{k}{2t+1}$ cm/s, where $k$ is a constant. Initially the radius of the patch is 1 cm and the radius is increasing at a rate of 0.5 cm/s.\n a) Show that $k=0.5$.\n b) Find an expression for $r$ in terms of $t$.\n c) Hence find the rate of increase of the area of the patch after the patch has been expanding for 3 seconds.",
-        answer: "a) $k=0.5$\n b) $r=\\frac{1}{4}\\ln (2t+1)+1$\n c) 0.667$\\text{cm}^2$/s",
+        question: `A circular patch of water of negligible thickness is expanding on a thin piece of paper. At time t seconds the rate of change of the radius, r cm, of the patch is given by dr/dt = k/(2t + 1) cm/s, where k is a constant. Initially the radius of the patch is 1 cm and the radius is increasing at a rate of 0.5 cm/s.
+        a) Show that k = 0.5.
+        b) Find an expression for r in terms of t.
+        c) Hence find the rate of increase of the area of the patch after the patch has been expanding for 3 seconds.`,
+        answer: `a) k = 0.5
+        b) r = 1/4(ln(2t + 1) + 1)
+        c) 0.667 cm²/s`,
+        solution: `a) dr/dt = k/(2t + 1)
+        When t = 0 and dr/dt = 0.5,
+        0.5 = k/(2(0) + 1)
+        0.5 = k/1
+        0.5 = k
+        
+        b) dr/dt = k/(2t + 1) = 0.5/(2t + 1) = 1/2(1/(2t + 1))
+        r = \\int 1/2(1/(2t + 1)) dt = 1/2\\int 1/(2t + 1) dt = 1/2[ln(2t + 1)/2] + c = 1/4ln(2t + 1) + c
+        When t = 0 and r = 1,
+        1 = 1/4ln[2(0) + 1] + c
+        1 = 1/4(0) + c
+        1 = c
+        r = 1/4ln(2t + 1) + 1
+        
+        c) Let A denote area of the circular patch
+        dA/dt = dA/dr \\times dr/dt = dA/dr \\times 1/2(1/(2t + 1))
+        A = \\pir²
+        dA/dr = 2\\pir
+        dA/dt = 2\\pir \\times 1/2(1/(2t + 1)) = \\pir (1/(2t + 1)) = (\\pir)/(2t + 1)
+        Substitute t = 3 into equation of r,
+        r = 1/4(ln[2(3) + 1]) + 1 = 1/4(ln7) + 1
+        dA/dt = (\\pi(1/4(ln7) + 1))/(2(3) + 1) = 0.66717 \\approx 0.667 cm²/s`,
     },
     {
-        question: "A ball is thrown vertically upwards. Its height, $h$ m, above the ground at time $t$ seconds after being thrown is given by the formula $h=1.75+5t-5t^2$. a) State the height above the ground from which the ball is thrown.\n b) Express $h$ in the form $a+b(t+c)^2$ where $a,\,b$ and $c$ are constants to be determined.\n c) Hence state the maximum height attained by the ball and the time at which this occurs.\n d) The ball hits the ground. Explain why the time taken for the ball to hit the ground is not twice the time found in part (c).\n e) Find the length of time for which the ball is at least 2 m above the ground.",
-        answer: "a) 1.75 m\n b) $3-5(t-0.5)^2$\n c) maximum height = 3 m, time = 0.5 seconds\n d) 1.75 m\n e) 0.894 s",
-    },
-    {
-        question: "The perpendicular bisector of the line joining the points $A(2,\,h)$ and $B(-8,\,-7)$ passes through the point $X(h,\,-\\frac{13}{2})$, where $h$ is a constant.\n a) Express the gradient of the perpendicular bisector of the line $AB$ in terms of $h$.\n b) Hence find the possible values of $h$.",
-        answer: "a) $\\frac{10}{-7-h}$\n b) $h=-2,\,h=9$",
-    },
-    {
-        question: "The coefficient of $x^3$ in the expansion of $(k+2x)(2-\frac{1}{2}x)^6$ is zero. Find the value of constant $k$.",
-        answer: "$k=6$",
-    },
-    {
-        question: "Tea is poured into an empty cup. The temperature, $T_c\,\\degree$C, of the tea in the cup, $t$ minutes after it is poured, is modelled by the formula $T_c=86e^{-0.06t}$. a) State the initial temperature of the tea.\n b) Find the time taken for the temperature of the tea to drop to 37$\degree$C.\n c) Some tea is poured into an empty cup and at the same time the same volume of tea is poured into an empty flask. The temperature, $T_f\,\\degree$C, of the tea in the flask at time $t$ minutes after it is poured into the flask is modelled by $T_f=86e^{-xt}$ where $x$ is a constant. The formula for $T_c$ still applies.\n i) After one hour the temperature of the tea in the flask is 82$\\degree$C. Find $x$.\n ii) Using your answer from part (c)(i) find the time when the temperature of the tea in the cup is half the temperature of the tea in the flask.",
-        answer: "a) $86\\degree$C\n b) 14.1 minutes\n c)i) 0.000794\n ii) 11.7 minutes",
+        question: `A ball is thrown vertically upwards. Its height, h m, above the ground at time t seconds after being thrown is given by the formula h = 1.75 + 5t - 5t². a) State the height above the ground from which the ball is thrown.
+        b) Express h in the form a + b(t + c)² where a, b and c are constants to be determined.
+        c) Hence state the maximum height attained by the ball and the time at which this occurs.
+        d) The ball hits the ground. Explain why the time taken for the ball to hit the ground is not twice the time found in part (c).
+        e) Find the length of time for which the ball is at least 2 m above the ground.`,
+        answer: `a) 1.75 m
+        b) 3 - 5(t - 0.5)²
+        c) maximum height = 3 m, time = 0.5 seconds
+        d) 1.75 m
+        e) 0.894 s`,
+        solution: `a) h = 1.75 + 5t - 5t²
+        Let t = 0,
+        h = 1.75 + 5(0) - 5(0)² 
+        h = 1.75 m
+        
+        b) 1.75 + 5t - 5t² 
+        = -5t² + 5t + 1.75 
+        = -5(t² - t) + 1.75 
+        = -5[(t - 1/2)² - (1/2)²] + 1.75 
+        = -5(t - 0.5)² + 1.25 + 1.75 
+        = -5(t - 0.5)² + 3  = 3 - 5(t - 0.5)²
+        
+        c) h = -5(t - 0.5²) + 3
+        Maximum height = 3 m when time is 0.5 seconds
+        
+        d) The ball's path started from 1.75 m above the ground instead of from the ground
+        
+        e) h = 3 - 5(t - 0.5)²
+        Let h = 2,
+        2 = 3 - 5(t - 0.5)²
+        5(t - 0.5)² = 1
+        (t - 0.5)² = 1/5
+        t - 0.5 = \\pm\\sqrt{1/5}
+        t = \\sqrt{1/5} + 0.5 or -\\sqrt{1/5} + 0.5
+        t = 0.94721 or 0.05278
+        Duration = 0.94721 - 0.05278 = 0.89443 \\approx 0.894 s`,
     },
 ];
 
-// Convert all questions and answers to plain text
+// convert pyp_questions_raw to plain text
 const pyp_questions = pyp_questions_raw.map(item => ({
     question: latexToPlainText(item.question),
     answer: latexToPlainText(item.answer),
-    // Keep original LaTeX versions if needed for API
-    questionLatex: item.question,
-    answerLatex: item.answer
+    solution: latexToPlainText(item.solution),
 }));
 
 module.exports = pyp_questions;
