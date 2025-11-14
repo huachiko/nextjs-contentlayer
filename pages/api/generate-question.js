@@ -1,7 +1,3 @@
-// ==========================================
-// FILE: pages/api/generate-question.js
-// ==========================================
-
 const questions = require('../../data/questions');
 
 export default async function handler(req, res) {

@@ -73,7 +73,7 @@ export default function ProfilePage() {
             <div className="avatar-container">
               <div className="avatar">
                 <img 
-                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=Ally&backgroundColor=ffd700,ff6347&hairColor=4a5fa5" 
+                  src="/3d-avatar-12.png" 
                   alt="Profile Avatar"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />

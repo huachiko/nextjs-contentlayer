@@ -2,5 +2,10 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/profile": "pages/profile.js"
+  "/profile": "pages/profile.js",
+  "/topicspage": "pages/topicspage.js",
+  "/pyp": "pages/pyp.js",
+  "/home": "pages/home.js",
+  "/activitystatspage": "pages/activitystatspage.js",
+  "/api/activity-stats": "pages/api/activity-stats.js"
 }

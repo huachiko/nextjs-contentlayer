@@ -5,21 +5,23 @@ import { useRouter } from 'next/router';
 const Topicspage = () => {
   const router = useRouter();
 
+  // State for controlling sidebar expand/collapse
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
 
-  // replace hard-coded defaults; will hydrate from localStorage on mount
+  // User profile states
   const [userName, setUserName] = useState('');
   const [statusMessage, setStatusMessage] = useState('Im cooked');
 
-  // keep userId so the page "remembers" it; we'll also pass it to /quiz
+  // States for inline editing of name and status
   const [userId, setUserId] = useState(null);
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingStatus, setIsEditingStatus] = useState(false);
 
-  // ⬇️ hydrate from localStorage and guard route
+  //  hydrate user data from localStorage and guard the route
   useEffect(() => {
     try {
+      // Retrieve user data from localStorage (only on client side)
       const raw = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
       if (!raw) {
         router.replace('/'); // no session -> back to sign-in
@@ -50,8 +52,8 @@ const Topicspage = () => {
     }
   }, [router]);
 
+  // Handles navigation to quiz page when a topic card is clicked
   const handleTopicClick = (topicName, topicTitle) => {
-    // include uid for convenience; quiz still reads localStorage itself
     router.push({
       pathname: '/quiz',
       query: {
@@ -72,7 +74,6 @@ const Topicspage = () => {
   const handleNameSubmit = (e) => {
     if (e.key === 'Enter' || e.type === 'blur') {
       setIsEditingName(false);
-      // (optional) persist edited name locally so it sticks on refresh:
       try {
         const raw = localStorage.getItem('user');
         if (raw) {
@@ -221,20 +222,7 @@ const Topicspage = () => {
                   </div>
                 </button>
 
-                {/* Card 6 - Binomial Theorem */}
-                <button 
-                  className="topicspage-group50"
-                  onClick={() => handleTopicClick('binomial-theorem', 'Binomial Theorem')}
-                >
-                  <img src="/topic6.png" alt="Forest path" className="topicspage-rectangle21" />
-                  <div className="topicspage-card-content">
-                    <div className="topicspage-card-title">
-                      <img src="/icon6.png" alt="Icon" className="topicspage-group4" />
-                      <span className="topicspage-text17">Binomial Theorem</span>
-                    </div>
-                    <span className="topicspage-text18">2,453 students</span>
-                  </div>
-                </button>
+               
 
                 {/* Card 7 - Coordinate Geometry */}
                 <button 
@@ -266,20 +254,7 @@ const Topicspage = () => {
                   </div>
                 </button>
 
-                {/* Card 9 - Application of Straight Line Graphs */}
-                <button 
-                  className="topicspage-group49"
-                  onClick={() => handleTopicClick('straight-line-graphs', 'Application of Straight Line Graphs')}
-                >
-                  <img src="/topic9.png" alt="Desert sunset" className="topicspage-rectangle20" />
-                  <div className="topicspage-card-content">
-                    <div className="topicspage-card-title">
-                      <img src="/icon9.png" alt="Icon" className="topicspage-group3" />
-                      <span className="topicspage-text15">Application of Straight Line Graphs</span>
-                    </div>
-                    <span className="topicspage-text16">2,453 students</span>
-                  </div>
-                </button>
+               
 
                 {/* Card 10 - Trigonometric Functions */}
                 <button 
@@ -413,21 +388,6 @@ const Topicspage = () => {
                       <span className="topicspage-text17">Kinematics</span>
                     </div>
                     <span className="topicspage-text18">2,453 students</span>
-                  </div>
-                </button>
-
-                {/* Card 19 - Plane Geometry */}
-                <button 
-                  className="topicspage-group52"
-                  onClick={() => handleTopicClick('plane-geometry', 'Plane Geometry')}
-                >
-                  <img src="/topic19.png" alt="Galaxy" className="topicspage-rectangle22" />
-                  <div className="topicspage-card-content">
-                    <div className="topicspage-card-title">
-                      <img src="/icon19.png" alt="Icon" className="topicspage-group51" />
-                      <span className="topicspage-text19">Plane Geometry</span>
-                    </div>
-                    <span className="topicspage-text20">2,453 students</span>
                   </div>
                 </button>
               </div>

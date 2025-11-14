@@ -1,5 +1,4 @@
-// pages/api/activity-stats.js
-import { prisma } from "../../lib/prisma"; // adjust path if your prisma helper lives elsewhere
+import { prisma } from "../../lib/prisma"; 
 
 function toYMD(d) {
   const yy = d.getFullYear();
@@ -20,9 +19,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    // -------------------------
-    // 1) HISTORY (recent 4 for this user)
-    // -------------------------
+    
+    // 1) HISTORY 
     const recent = await prisma.quizSession.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
@@ -39,9 +37,8 @@ export default async function handler(req, res) {
       date: toYMD(new Date(r.createdAt)),
     }));
 
-    // -------------------------
-    // 2) LEADERBOARD (top 3 by avg correct rate across all users)
-    // -------------------------
+    
+    // 2) LEADERBOARD 
     const grouped = await prisma.quizSession.groupBy({
       by: ["userId"],
       _sum: { correct: true, total: true },
@@ -83,9 +80,8 @@ export default async function handler(req, res) {
         sumTotal: e.sumTotal,
       }));
 
-    // -------------------------
+    
     // 3) STATS (last 3 days for THIS user: total questions generated per day)
-    // -------------------------
     const today = new Date();
     const start = new Date(today);
     start.setDate(today.getDate() - 2); // include today; 3-day window
@@ -113,9 +109,7 @@ export default async function handler(req, res) {
       }
     });
 
-    // -------------------------
     // RESPONSE
-    // -------------------------
     return res.status(200).json({
       history,        // [{ id, topic, correct, total, rate, date }]
       leaderboard,    // [{ rank, userId, name, avgPercent, sumCorrect, sumTotal }]

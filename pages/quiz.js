@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 
+// Displays animated video based on user's quiz score
 function ScoreVideo({ score }) {
   const getVideoUrl = () => {
     if (score >= 90) return '/videos/excellent.mp4';
@@ -28,7 +29,7 @@ function ScoreVideo({ score }) {
     </video>
   );
 }
-
+// ResultsModal Component
 function ResultsModal({ score, totalQuestions, correctAnswers, topic, onClose, onTryAgain }) {
   const handleClose = () => {
     if (topic) {
@@ -109,9 +110,11 @@ function ResultsModal({ score, totalQuestions, correctAnswers, topic, onClose, o
     </div>
   );
 }
-
+// QuizPage component
 const QuizPage = () => {
   const router = useRouter()
+
+  //Quiz state management
   const [currentQuestion, setCurrentQuestion] = useState(1)
   const [showSolution, setShowSolution] = useState(false)
   const [showAnswer, setShowAnswer] = useState(false)
@@ -120,7 +123,8 @@ const QuizPage = () => {
   const [questionStatuses, setQuestionStatuses] = useState({})
   const [showResults, setShowResults] = useState(false)
   const [maxQuestion, setMaxQuestion] = useState(10)
-  
+
+  // Session and question data
   const [sessionId, setSessionId] = useState(null)
   const [questions, setQuestions] = useState({})
   const [loading, setLoading] = useState(false)
